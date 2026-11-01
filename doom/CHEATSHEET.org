@@ -50,9 +50,25 @@ buffers stay open). Reconnect from iPad → =e= → everything is where you left
 | =(=         | show/hide details                |
 | =q=         | close                            |
 
-* Project tree (treemacs, =SPC o p=)
-Sidebar like VS Code. =j/k= move, =TAB= expand, =RET= open, =q= hide.
+* Right sidebar: file tree + git panel (like VS Code)
+File tree (=SPC o p=) on top, git panel (=SPC o g=) below it.
+File tree: =j/k= move, =TAB= expand, =RET= open, =q= hide.
 =SPC p p= switches project.
+
+The git panel opens by itself when you open a file in a git repo on a
+wide screen (150+ columns), follows you between repos, and refreshes
+when files change on disk. =q= / =SPC o g= hides it (stays hidden until
+=SPC o g= again).
+
+| Key (in git panel) | Does                                   |
+|--------------------+----------------------------------------|
+| =RET=              | open file in the main area             |
+| =TAB=              | show / hide the file's diff            |
+| =s= / =u=          | stage / unstage                        |
+| =x=                | discard change (asks first)            |
+| =c c=              | commit staged (message opens main area) |
+| =P p=              | push                                   |
+| =q=                | hide panel                             |
 
 * Code
 | Key       | Does                         |
@@ -100,6 +116,7 @@ tmux: =C-b z= zooms the current pane full screen (again = back).
 | Key       | Does                            |
 |-----------+---------------------------------|
 | =SPC g g= | magit status (s=stage, cc=commit, P p=push) |
+| =SPC o g= | git panel in the right sidebar  |
 | =SPC o e= | eshell popup                    |
 | =SPC o E= | eshell full window              |
 

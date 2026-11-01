@@ -128,6 +128,192 @@ Refreshes itself every 2s when files change. Pair with `pd' in the shell."
 (map! :leader :desc "Live diff (auto-refresh)" "g d" #'+live-diff)
 
 
+;;; Right sidebar, like VS Code: file tree (SPC o p) above a git panel (SPC o g)
+
+(setq treemacs-position 'right
+      treemacs-width 40)
+
+;; The git panel is a narrow magit status in a right side window, below
+;; treemacs. It opens by itself when you visit a file in a git repo on a
+;; wide enough screen, follows you between repos, and refreshes when files
+;; change on disk. Its own buffer, so SPC g g still opens the big magit.
+
+(defvar +git-panel-auto t
+  "Show the git panel automatically. SPC o g / q in the panel toggles it.")
+(defvar +git-panel-min-frame-width 150
+  "Only auto-show the panel on frames at least this many columns wide.")
+(defvar +git-panel-width 40)
+(defvar +git-panel--timer nil)
+(defvar-local +git-panel--fingerprint nil)
+
+(defun +git-panel--root ()
+  (when-let ((dir (locate-dominating-file default-directory ".git")))
+    (expand-file-name dir)))
+
+(defun +git-panel--window (&optional frame)
+  (seq-find (lambda (w) (window-parameter w '+git-panel))
+            (window-list frame 'nomini)))
+
+(defun +git-panel--main-window (&optional frame)
+  "Most recently used window that isn't a sidebar or popup."
+  (car (sort (seq-remove (lambda (w) (window-parameter w 'window-side))
+                         (window-list frame 'nomini))
+             (lambda (a b) (> (window-use-time a) (window-use-time b))))))
+
+(defun +git-panel--display (buffer)
+  (let ((win (display-buffer-in-side-window
+              buffer `((side . right) (slot . 1)
+                       (window-width . ,+git-panel-width)
+                       (preserve-size . (t . nil))
+                       (window-parameters . ((no-delete-other-windows . t)))))))
+    (set-window-parameter win '+git-panel buffer)
+    win))
+
+(defun +git-panel--fingerprint ()
+  (secure-hash 'md5 (shell-command-to-string
+                     "git rev-parse HEAD 2>/dev/null; git status --porcelain 2>/dev/null; git diff --numstat 2>/dev/null; git diff --cached --numstat 2>/dev/null")))
+
+(defun +git-panel--tick ()
+  "Refresh visible panels whose repo changed; stop when none are left."
+  (let (alive)
+    (dolist (frame (frame-list))
+      (when-let ((win (+git-panel--window frame)))
+        (setq alive t)
+        (when (and (frame-visible-p frame) (not (active-minibuffer-window)))
+          (with-current-buffer (window-buffer win)
+            (when (derived-mode-p '+git-panel-mode)
+              (let ((fp (+git-panel--fingerprint)))
+                (unless (equal fp +git-panel--fingerprint)
+                  (setq +git-panel--fingerprint fp)
+                  (magit-refresh-buffer))))))))
+    (unless alive
+      (cancel-timer +git-panel--timer)
+      (setq +git-panel--timer nil))))
+
+(defun +git-panel-show (root)
+  "Show the git panel for the repo at ROOT without leaving the current window."
+  (require 'magit)
+  (let ((default-directory root)
+        (magit-display-buffer-function #'+git-panel--display)
+        (magit-display-buffer-noselect t))
+    (pcase-let ((`(,dargs ,dfiles) (magit-diff--get-value 'magit-status-mode 'status))
+                (`(,largs ,lfiles) (magit-log--get-value 'magit-status-mode 'status)))
+      (magit-setup-buffer #'+git-panel-mode nil
+        (magit-buffer-diff-args  dargs)
+        (magit-buffer-diff-files dfiles)
+        (magit-buffer-log-args   largs)
+        (magit-buffer-log-files  lfiles))))
+  (unless +git-panel--timer
+    (setq +git-panel--timer (run-with-timer 2 2 #'+git-panel--tick))))
+
+(defun +git-panel-hide ()
+  "Close the git panel and stop auto-showing it until SPC o g."
+  (interactive)
+  (setq +git-panel-auto nil)
+  (when-let ((win (+git-panel--window)))
+    (delete-window win)))
+
+(defun +git-panel-toggle ()
+  "Show or hide the git panel for the current repo."
+  (interactive)
+  (if (+git-panel--window)
+      (+git-panel-hide)
+    (setq +git-panel-auto t)
+    (+git-panel-show (or (+git-panel--root) (user-error "Not inside a git repo")))))
+
+(defun +git-panel--maybe-show (window)
+  (when (and +git-panel-auto
+             (window-live-p window)
+             (not (window-parameter window 'window-side))
+             (>= (frame-width (window-frame window)) +git-panel-min-frame-width))
+    (with-selected-window window
+      (when-let ((root (and buffer-file-name
+                            (not (file-remote-p default-directory))
+                            (+git-panel--root))))
+        (let ((panel (+git-panel--window)))
+          (unless (or (and panel (file-equal-p root (buffer-local-value
+                                                     'default-directory
+                                                     (window-buffer panel))))
+                      ;; Big magit (or the live diff) already on screen.
+                      (seq-find (lambda (w) (eq (buffer-local-value 'major-mode (window-buffer w))
+                                                'magit-status-mode))
+                                (window-list nil 'nomini)))
+            (+git-panel-show root)))))))
+
+;; A plain timer, not an idle one: files opened via emacsclient arrive
+;; while Emacs is already idle, and idle timers would wait for a keypress.
+(defun +git-panel-auto-h (&rest _)
+  (when +git-panel-auto
+    (run-at-time 0.3 nil #'+git-panel--maybe-show (selected-window))))
+
+(add-hook 'doom-switch-buffer-hook #'+git-panel-auto-h)
+
+(defun +git-panel--guard-h (frame)
+  "Keep the panel showing only the panel; anything else opens in the main area."
+  (when-let* ((win (+git-panel--window frame))
+              (panel (window-parameter win '+git-panel))
+              (buf (window-buffer win))
+              ((not (eq buf panel))))
+    (let ((main (+git-panel--main-window frame)))
+      (if (buffer-live-p panel)
+          (set-window-buffer win panel)
+        (delete-window win))
+      (when main
+        (set-window-buffer main buf)
+        (select-window main)))))
+
+(add-hook 'window-buffer-change-functions #'+git-panel--guard-h)
+
+(map! :leader :desc "Git panel" "o g" #'+git-panel-toggle)
+
+(after! magit
+  (define-derived-mode +git-panel-mode magit-status-mode "Git panel"
+    "Narrow magit status for the right sidebar."
+    (setq-local truncate-lines t
+                ;; File list only, like VS Code; TAB on a file shows its diff.
+                magit-section-initial-visibility-alist
+                '((file . hide) (stashes . hide) (recent . hide)
+                  (unpushed . hide) (unpulled . hide))))
+
+  (defun +git-panel-refresh-buffer ()
+    (magit-status-refresh-buffer))
+
+  (defun +git-panel-visit-file ()
+    "Open the file at point in the main area, not inside the panel."
+    (interactive)
+    (let ((main (+git-panel--main-window)))
+      (magit-diff-visit-file--internal
+       t (lambda (buf)
+           (when main (select-window main))
+           (switch-to-buffer buf)))))
+
+  ;; Commands run from the panel (diffs, commit message, logs) open in
+  ;; the main area instead of squeezing into the sidebar.
+  (defadvice! +git-panel--display-in-main-a (&rest _)
+    :before #'magit-display-buffer
+    (when-let (((window-parameter nil '+git-panel))
+               (main (+git-panel--main-window)))
+      (select-window main)))
+
+  ;; Staging in the panel updates the big magit status, and vice versa.
+  (add-hook! 'magit-post-refresh-hook
+    (defun +git-panel--sync-h ()
+      (ignore-errors
+        (when-let ((other (magit-get-mode-buffer
+                           (if (derived-mode-p '+git-panel-mode)
+                               'magit-status-mode
+                             '+git-panel-mode))))
+          (unless (or (eq other (current-buffer))
+                      (not (get-buffer-window other 'visible)))
+            (with-current-buffer other
+              (magit-refresh-buffer)))))))
+
+  (map! :map +git-panel-mode-map
+        [remap magit-diff-visit-file]          #'+git-panel-visit-file
+        [remap magit-diff-visit-worktree-file] #'+git-panel-visit-file
+        :n "q" #'+git-panel-hide))
+
+
 ;;; Projects
 
 (setq projectile-project-search-path '(("~/dev" . 1) ("~/" . 1)))
