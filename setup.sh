@@ -38,7 +38,8 @@ fi
 
 if [[ ! -d $HOME/.config/emacs ]]; then
   git clone --depth 1 https://github.com/doomemacs/doomemacs "$HOME/.config/emacs"
-  "$HOME/.config/emacs/bin/doom" install --force --env --no-config
-else
-  echo "Doom already installed. After pulling changes run: doom sync"
 fi
+
+# Always sync: finishes an interrupted install, applies pulled config
+# changes, and refreshes the env file so Emacs sees the current PATH.
+"$HOME/.config/emacs/bin/doom" sync --env

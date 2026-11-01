@@ -12,8 +12,9 @@ gh repo clone TheRauch1/dotfiles ~/dev/dotfiles
 ```
 
 `setup.sh` symlinks the configs into place (backing up anything already
-there), hooks `doom/shell.zsh` into `~/.zshrc`, and installs Doom Emacs if
-it's missing. Re-run it any time.
+there), hooks `doom/shell.zsh` into `~/.zshrc`, installs Doom Emacs if
+it's missing, and runs `doom sync`. Re-run it any time, e.g. after
+`git pull`.
 
 ## What's here
 
