@@ -1,0 +1,133 @@
+#+title: Doom on iPad — Cheat Sheet
+(Open anytime with =SPC ?=. Press =SPC= and wait: a menu shows every key.)
+
+* Getting in / out
+| Shell command  | Does                                             |
+|----------------+--------------------------------------------------|
+| =e file=       | open file in running Emacs (starts it if needed) |
+| =e .=          | open current dir                                 |
+| =ekill=        | stop the Emacs daemon                            |
+| =doom sync=    | after editing init.el / packages.el              |
+
+Inside Emacs: =SPC q q= closes this frame (Emacs keeps running, your
+buffers stay open). Reconnect from iPad → =e= → everything is where you left it.
+
+* Modes (vim)
+| Key         | Does                                    |
+|-------------+-----------------------------------------|
+| =i= / =a=   | start typing (before / after cursor)    |
+| =jk=        | back to normal mode (iPad has no Esc)   |
+| =C-[=       | also Esc                                |
+| =C-s=       | save (files also auto-save after 5s)    |
+| =u= / =C-r= | undo / redo                             |
+| =v= / =V=   | select chars / lines                    |
+
+* Files & projects
+| Key         | Does                         |
+|-------------+------------------------------|
+| =SPC SPC=   | find file in project         |
+| =SPC .=     | find file (browse)           |
+| =SPC f r=   | recent files                 |
+| =SPC ,=     | switch buffer                |
+| =SPC p p=   | switch project               |
+| =SPC o p=   | file tree (treemacs)         |
+| =SPC o -=   | file manager (dired) here    |
+| =SPC /=     | search text in project       |
+| =SPC s s=   | search in this file          |
+| =SPC `=     | flip to previous file        |
+| =]b= / =[b= | next / prev open file        |
+
+* Folder browser (dired, =SPC o -=)
+| Key         | Does                             |
+|-------------+----------------------------------|
+| =j= / =k=   | down / up                        |
+| =l= / =RET= | open file or folder              |
+| =h= / =-=   | up one folder                    |
+| =+=         | new folder                       |
+| =R= / =C=   | rename-move / copy               |
+| =D=         | delete                           |
+| =m= / =u=   | mark / unmark (then R/C/D on all) |
+| =(=         | show/hide details                |
+| =q=         | close                            |
+
+* Project tree (treemacs, =SPC o p=)
+Sidebar like VS Code. =j/k= move, =TAB= expand, =RET= open, =q= hide.
+=SPC p p= switches project.
+
+* Code
+| Key       | Does                         |
+|-----------+------------------------------|
+| =gd=      | go to definition             |
+| =K=       | docs for symbol              |
+| =SPC c a= | code actions (LSP)           |
+| =SPC c r= | rename symbol                |
+| =SPC c f= | format buffer                |
+| =SPC c x= | list errors                  |
+| =]e= =[e= | next / prev error            |
+| =gcc=     | comment line                 |
+| =SPC m=   | language-specific menu       |
+
+* Windows & workspaces
+| Key                 | Does                     |
+|---------------------+--------------------------|
+| =SPC w v= / =SPC w s= | split right / below    |
+| =SPC w w=           | next window              |
+| =SPC w d=           | close window             |
+| =SPC 1..9=          | jump to window by number |
+| =SPC TAB TAB=       | list workspaces          |
+| =SPC TAB 1..9=      | switch workspace         |
+
+* pi + live diff
+Shell, inside any git repo: =pd= → pi on one side, live diff on the other
+(side by side when wide, stacked when narrow). Tap a pane to switch.
+Inside Emacs: =SPC g d= turns the current window into the live diff.
+
+| Key (in diff)     | Does                                  |
+|-------------------+---------------------------------------|
+| =C-j= / =C-k=     | next / prev section (file, hunk)      |
+| =]= / =[=         | next / prev file                      |
+| =TAB=             | fold / unfold                         |
+| =RET=             | jump to that line in the file         |
+| =s= / =u=         | stage / unstage (file or hunk)        |
+| =x=               | discard change (asks first)           |
+| =c c=             | commit staged                         |
+| =q=               | close                                 |
+
+tmux: =C-b z= zooms the current pane full screen (again = back).
+=C-b o= switches pane without touching the screen.
+
+* Git & shell
+| Key       | Does                            |
+|-----------+---------------------------------|
+| =SPC g g= | magit status (s=stage, cc=commit, P p=push) |
+| =SPC o e= | eshell popup                    |
+| =SPC o E= | eshell full window              |
+
+* Help
+| Key       | Does                     |
+|-----------+--------------------------|
+| =SPC h k= | what does this key do?   |
+| =SPC h f= | describe function        |
+| =SPC :=   | run any command (M-x)    |
+| =C-g=     | cancel anything          |
+
+* iPad setup tips
+- *Blink Shell* recommended (mosh, OSC 52 clipboard, key remaps).
+  - Settings → Keyboard → map Caps Lock → Esc.
+  - Settings → Keyboard → Option as Meta.
+- Copying in Emacs (=y=) lands on the iPad clipboard via OSC 52.
+- Touch / trackpad: tap to place cursor, two-finger scroll works.
+
+* Language servers (optional, for LSP features)
+Emacs works without them. Install any you want, then reopen the file:
+| Language   | Install                                          |
+|------------+--------------------------------------------------|
+| Python     | =uv tool install ty= ; =uv tool install ruff=    |
+| JS/TS      | =npm i -g typescript typescript-language-server= |
+| Go         | =go install golang.org/x/tools/gopls@latest=     |
+| Rust       | =rustup component add rust-analyzer=             |
+| Bash       | =npm i -g bash-language-server=                  |
+| YAML       | =npm i -g yaml-language-server=                  |
+| HTML/CSS/JSON | =npm i -g vscode-langservers-extracted=       |
+| Typst      | =tinymist= binary on PATH; grammar: =M-x treesit-install-language-grammar RET typst= |
+| R          | R's =languageserver= package                     |
