@@ -86,6 +86,7 @@ leader("gc", function() require("neogit").open({ "commit", cwd = util.root() }) 
 leader("gl", pick("git_log"), "Git log")
 leader("gL", pick("git_log_file"), "Git log of this file")
 leader("gS", pick("git_status"), "Changed files")
+leader("gb", function() Snacks.picker.git_branches({ cwd = util.root() }) end, "Switch branch")
 leader("go", function() Snacks.gitbrowse() end, "Open on GitHub (copies URL)", { "n", "x" })
 
 -- GitHub (gh CLI), like Doom's SPC g p ------------------------------------

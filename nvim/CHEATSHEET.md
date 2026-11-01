@@ -159,6 +159,7 @@ prompt): `:e!` takes the disk version, `:w` keeps yours.
 | Key       | Does                                          |
 |-----------|-----------------------------------------------|
 | `SPC g g` | Neogit, a magit clone (s stage, u unstage, x discard, c c commit, P p push, TAB fold, q close) |
+| `SPC g b` | switch branch: type to filter, RET checks out, C-a creates a new branch, C-x deletes |
 | `SPC g G` | lazygit                                       |
 | `SPC g d` | live diff (see above)                         |
 | `SPC g D` | side-by-side diff of all changes (Diffview)   |
