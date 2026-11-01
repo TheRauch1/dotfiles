@@ -37,7 +37,7 @@ done
 if ! command -v mise >/dev/null && [[ ! -x $HOME/.local/bin/mise ]]; then
   curl -fsSL https://mise.run | sh
 fi
-"$HOME/.local/bin/mise" install || command mise install
+"$(command -v mise || echo "$HOME/.local/bin/mise")" install
 # Shims make mise tools visible to Emacs regardless of the current directory
 # (and land in Doom's env file below).
 export PATH="$HOME/.local/share/mise/shims:$PATH"
