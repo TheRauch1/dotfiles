@@ -1,0 +1,25 @@
+# Command-line tools, installed per user by mise on Linux, macOS and Windows.
+# setup.sh links this to ~/.config/mise/config.toml and runs `mise install`.
+# Emacs itself (and a C compiler, for tree-sitter grammars) still come from
+# apt / brew: mise has no good way to install those.
+
+[tools]
+pi = "latest"
+gh = "latest"
+ripgrep = "latest"
+fd = "latest"
+lazygit = "latest"
+node = "lts"
+uv = "latest"
+neovim = "latest"
+
+# Language servers: Emacs (eglot) and Neovim find them on PATH.
+ruff = "latest"
+ty = "latest"
+rust-analyzer = "latest"
+tinymist = "latest"
+"npm:typescript" = "latest"
+"npm:typescript-language-server" = "latest"
+"npm:bash-language-server" = "latest"
+"npm:yaml-language-server" = "latest"
+"npm:vscode-langservers-extracted" = "latest"

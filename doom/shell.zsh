@@ -1,32 +1,22 @@
-# Doom Emacs shell integration (sourced from ~/.zshrc)
+# Doom Emacs shell integration (sourced from ~/.zshrc and ~/.bashrc; works in both)
 
-export PATH="$HOME/.config/emacs/bin:$HOME/.local/go/bin:$HOME/go/bin:$PATH"
+export PATH="$HOME/.config/emacs/bin:$HOME/.local/share/mise/shims:$HOME/.local/go/bin:$HOME/go/bin:$PATH"
 export COLORTERM=truecolor
 
 # Open in the running Emacs daemon (starts one if missing). Survives SSH drops.
 e() { emacsclient -t -a '' "${@:-.}"; }
 alias ekill="emacsclient -e '(kill-emacs)'"
+# Always in the terminal: DISPLAY is often set (e.g. a multiplexer started on
+# the desktop), and a GUI window there is invisible from the iPad.
+alias emacs='emacs -nw'
 
-# pd [dir]: pi + live diff side by side (stacked on narrow screens).
-# Run inside or outside tmux. Tap a pane (or prefix + arrow) to switch.
+# pd [dir]: live diff of the repo in this terminal. It refreshes itself as
+# files change (e.g. while pi works in another herdr pane). Same as SPC g d.
 pd() {
   local root
   root=$(git -C "${1:-$PWD}" rev-parse --show-toplevel 2>/dev/null) \
     || { echo "pd: not inside a git repo"; return 1; }
-  local diff="emacsclient -t -a '' -e '(+live-diff \"$root/\")'"
-  if [[ -z $TMUX ]]; then
-    tmux new-session -d -s "pi-${root:t}" -c "$root" 2>/dev/null || {
-      tmux attach -t "pi-${root:t}"; return; }
-    tmux send-keys -t "pi-${root:t}" "pd" Enter
-    tmux attach -t "pi-${root:t}"
-    return
-  fi
-  local split=-h
-  (( $(tmux display -p '#{window_width}') < 140 )) && split=-v
-  tmux split-window $split -b -l 55% -c "$root"   # diff: left / top
-  tmux send-keys "$diff" Enter
-  tmux select-pane -l                              # back to this pane
-  cd "$root" && pi
+  emacsclient -t -a '' -e "(+live-diff \"$root/\")"
 }
 
 export EDITOR="emacsclient -t -a ''"

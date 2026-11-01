@@ -1,0 +1,3 @@
+# Ghostty: let Option act as Meta/Alt, so Emacs/Neovim see M-d (Option+d)
+# instead of a typed "∂". Linked to ~/.config/ghostty/config by setup.sh.
+macos-option-as-alt = true
