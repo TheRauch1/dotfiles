@@ -6,7 +6,7 @@ Linux box) and for watching a coding agent ([pi](https://pi.dev)) work.
 ## Install
 
 ```bash
-sudo apt install -y emacs ripgrep fd-find
+sudo apt install -y emacs ripgrep fd-find   # macOS: brew install emacs-plus ripgrep fd
 gh repo clone TheRauch1/dotfiles ~/dev/dotfiles
 ~/dev/dotfiles/setup.sh
 ```

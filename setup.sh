@@ -32,13 +32,20 @@ fi
 if ! command -v emacs >/dev/null; then
   echo
   echo "Emacs not found. Install it, then re-run this script:"
-  echo "  sudo apt install -y emacs ripgrep fd-find"
+  echo "  sudo apt install -y emacs ripgrep fd-find   # Debian/Ubuntu"
+  echo "  brew install emacs-plus ripgrep fd          # macOS (d12frosted/emacs-plus tap)"
   exit 1
 fi
 
 if [[ ! -d $HOME/.config/emacs ]]; then
-  git clone --depth 1 https://github.com/doomemacs/doomemacs "$HOME/.config/emacs"
+  git clone --depth 1 --recurse-submodules --shallow-submodules \
+    https://github.com/doomemacs/doomemacs "$HOME/.config/emacs"
 fi
+
+# Doom's modules (:ui, :editor, :lang, ...) live in a git submodule.
+# Without it `doom sync` silently installs only the core and Emacs
+# starts with no theme, no evil, nothing. Also repairs older clones.
+git -C "$HOME/.config/emacs" submodule update --init --depth 1
 
 # Always sync: finishes an interrupted install, applies pulled config
 # changes, and refreshes the env file so Emacs sees the current PATH.
