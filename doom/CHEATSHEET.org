@@ -83,6 +83,21 @@ when files change on disk. =q= / =SPC o g= hides it (stays hidden until
 | =gcc=     | comment line                 |
 | =SPC m=   | language-specific menu       |
 
+* Multi-cursor (like Cmd+D in VS Code)
+| Key            | Does                                                |
+|----------------+-----------------------------------------------------|
+| =C-d= / =M-d=  | select word under cursor; again = add next match    |
+| =M-D=          | add previous match instead                          |
+| =R= (visual)   | select all matches of the selection                 |
+| =C=            | replace all selected matches, type the new text     |
+| =RET=          | skip / unselect the match at the cursor             |
+| =C-n= / =C-p=  | jump between selected matches                       |
+| =Esc Esc=      | done (first Esc leaves typing, second ends it)      |
+
+=C-d= (Ctrl+d, like VS Code on Windows/Linux) works in every terminal.
+=M-= is Option/Alt: Blink needs "Option as Meta", Ghostty
+=macos-option-as-alt= (set in this repo), Windows Terminal works as is.
+
 * Windows & workspaces
 | Key                 | Does                     |
 |---------------------+--------------------------|
@@ -93,10 +108,9 @@ when files change on disk. =q= / =SPC o g= hides it (stays hidden until
 | =SPC TAB TAB=       | list workspaces          |
 | =SPC TAB 1..9=      | switch workspace         |
 
-* pi + live diff
-Shell, inside any git repo: =pd= → pi on one side, live diff on the other
-(side by side when wide, stacked when narrow). Tap a pane to switch.
-Inside Emacs: =SPC g d= turns the current window into the live diff.
+* Live diff (watch what pi changes)
+Inside Emacs: =SPC g d= turns the current window into a diff of the repo
+that refreshes itself whenever files change. From the shell: =pd=.
 
 | Key (in diff)     | Does                                  |
 |-------------------+---------------------------------------|
@@ -109,9 +123,6 @@ Inside Emacs: =SPC g d= turns the current window into the live diff.
 | =c c=             | commit staged                         |
 | =q=               | close                                 |
 
-tmux: =C-b z= zooms the current pane full screen (again = back).
-=C-b o= switches pane without touching the screen.
-
 * Git & shell
 | Key       | Does                            |
 |-----------+---------------------------------|
@@ -119,6 +130,33 @@ tmux: =C-b z= zooms the current pane full screen (again = back).
 | =SPC o g= | git panel in the right sidebar  |
 | =SPC o e= | eshell popup                    |
 | =SPC o E= | eshell full window              |
+
+* GitHub: pull requests, reviews, CI (gh CLI)
+Needs =gh auth login= once. =SPC g p= opens the menu (also =@= in magit
+status): open PRs, mine, waiting for my review, this branch's PR, new PR,
+GitHub Actions runs. =-R= in the menu picks another repo (OWNER/REPO).
+
+Magit status and the git panel show this branch's PR with its CI state
+(=PR: #12 ✓ checks approved=); =RET= on that line opens it. Buffers with
+running checks refresh themselves and say when CI finishes.
+
+| Key (gh buffers) | Does                                           |
+|------------------+------------------------------------------------|
+| =RET=            | open PR / run, log of a check, diff of a file  |
+| =TAB=            | fold (in the PR list: show a PR's checks)      |
+| =?=              | menu of everything below                       |
+| =d=              | diff                                           |
+| =c=              | check out the PR's branch                      |
+| =a= / =r=        | approve / request changes                      |
+| =C=              | comment (=C-c C-c= sends, =C-c C-k= cancels)   |
+| =A=              | ask someone to review                          |
+| =m=              | merge (squash/merge/rebase, auto-merge)        |
+| =D= / =X=        | draft ↔ ready / close ↔ reopen                 |
+| =L=              | log of the check at point (]e [e: errors)      |
+| =R=              | rerun failed checks                            |
+| =f= / =/=        | PR list: filter / search (=label:bug=, ...)    |
+| =o= / =Y=        | github.com (in a terminal: copies the URL)     |
+| =gr= / =q=       | refresh / back                                 |
 
 * Help
 | Key       | Does                     |

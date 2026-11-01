@@ -1,6 +1,6 @@
 ;;; $DOOMDIR/init.el -*- lexical-binding: t; -*-
 
-;; Module selection, tuned for terminal use (iPad over SSH/mosh + tmux).
+;; Module selection, tuned for terminal use (iPad over SSH/mosh + herdr).
 ;; Run `doom sync` after changing anything here.
 ;;
 ;; LSP note: eglot starts a language server only if one is on PATH.

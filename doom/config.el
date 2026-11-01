@@ -1,7 +1,7 @@
 ;;; $DOOMDIR/config.el -*- lexical-binding: t; -*-
 
 ;; Built for terminal Emacs reached from an iPad (Blink/Termius over SSH/mosh,
-;; usually inside tmux). Run in a daemon so sessions survive dropped
+;; usually inside herdr). Run in a daemon so sessions survive dropped
 ;; connections: `e file` in the shell attaches (see shell.zsh).
 ;;
 ;; Press SPC ? for the cheat sheet.
@@ -59,6 +59,18 @@
       (lambda () (not (and (bound-and-true-p evil-local-mode)
                            (evil-insert-state-p)))))
 (auto-save-visited-mode 1)
+
+
+;;; Multi-cursor like VS Code's Cmd+D / Ctrl+D
+
+;; Doom binds M-d (Option/Alt+d), which needs Option-as-Meta in the terminal.
+;; C-d works everywhere (Blink, Ghostty, Windows Terminal) with no setup, at
+;; the cost of evil's half-page scroll (C-f / C-b and the mouse still scroll).
+(map! :n "C-d" #'evil-multiedit-match-symbol-and-next
+      :v "C-d" #'evil-multiedit-match-and-next
+      (:after evil-multiedit
+       :map evil-multiedit-mode-map
+       :nv "C-d" #'evil-multiedit-match-and-next))
 
 
 ;;; Folder browsing: h = up a folder, l = open (like arrow keys)
@@ -312,6 +324,36 @@ Refreshes itself every 2s when files change. Pair with `pd' in the shell."
         [remap magit-diff-visit-file]          #'+git-panel-visit-file
         [remap magit-diff-visit-worktree-file] #'+git-panel-visit-file
         :n "q" #'+git-panel-hide))
+
+
+;;; GitHub: pull requests, reviews and CI checks via the gh CLI (SPC g p)
+
+;; The code lives in gh.el and loads on first use, or with magit (it adds
+;; the current branch's PR + CI status to magit status and the git panel).
+(dolist (cmd '(+gh-dispatch +gh-pr-list +gh-pr-list-mine +gh-pr-list-review
+               +gh-pr-view +gh-pr-view-current +gh-pr-create +gh-run-list +gh-run-list-branch))
+  (autoload cmd (expand-file-name "gh" doom-user-dir) nil t))
+
+(after! magit
+  (require '+gh (expand-file-name "gh" doom-user-dir)))
+
+;; Forge isn't installed, so take over Doom's forge keys too.
+(map! :leader
+      :desc "GitHub PRs & CI"   "g p"   #'+gh-dispatch
+      :desc "GitHub PRs & CI"   "g '"   #'+gh-dispatch
+      :desc "Find pull request" "g f p" #'+gh-pr-view
+      :desc "List pull requests" "g l p" #'+gh-pr-list
+      :desc "Pull request"      "g c p" #'+gh-pr-create)
+
+
+;;; Tree-sitter
+
+;; Never ask to install grammars when a file opens. In the shared daemon an
+;; unanswered y/n (say the iPad connection drops mid-prompt) blocks every
+;; frame, and building a grammar needs a C compiler anyway. Without one,
+;; the classic major mode is used. To get them: sudo apt install
+;; build-essential, then M-x treesit-install-language-grammar.
+(setq treesit-auto-install-grammar nil)
 
 
 ;;; Projects
