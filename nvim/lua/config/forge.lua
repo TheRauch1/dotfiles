@@ -191,7 +191,10 @@ local function builder()
     local line = ""
     for _, c in ipairs(chunks) do
       local text = (c[1] or ""):gsub("\n", " ")
-      if c[2] and #text > 0 then table.insert(self.hls, { #self.lines, #line, #line + #text, c[2] }) end
+      -- A chunk's hl and url share one extmark (url-only chunks get their own).
+      if (c[2] or c.url) and #text > 0 then
+        table.insert(self.hls, { #self.lines, #line, #line + #text, c[2], c.url })
+      end
       line = line .. text
     end
     table.insert(self.lines, line)
@@ -241,7 +244,7 @@ function M.new(o)
     vim.bo[buf].modified = false
     api.nvim_buf_clear_namespace(buf, ns, 0, -1)
     for _, h in ipairs(b.hls) do
-      pcall(api.nvim_buf_set_extmark, buf, ns, h[1], h[2], { end_col = h[3], hl_group = h[4] })
+      pcall(api.nvim_buf_set_extmark, buf, ns, h[1], h[2], { end_col = h[3], hl_group = h[4], url = h[5] })
     end
     S[buf].items = b.items
     for win, view in pairs(views) do

@@ -25,7 +25,9 @@ local function snapshot(name, buf)
   local ns = vim.api.nvim_get_namespaces()["gh"]
   local hls = {}
   for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })) do
-    hls[#hls + 1] = ("%d:%d-%d %s"):format(m[2], m[3], m[4].end_col, m[4].hl_group)
+    if m[4].hl_group then -- url-only extmarks (links) carry no highlight
+      hls[#hls + 1] = ("%d:%d-%d %s"):format(m[2], m[3], m[4].end_col, m[4].hl_group)
+    end
   end
   table.sort(hls)
   T.snapshot(name .. "_hl", hls)
@@ -36,6 +38,20 @@ return {
     local gh = setup({ ["pr list"] = ok("gh/pr_list.json") })
     local buf = gh.pr_list("open", REPO)
     snapshot("gh_pr_list", buf)
+  end,
+
+  pr_list_links = function()
+    local gh = setup({ ["pr list"] = ok("gh/pr_list.json") })
+    local buf = gh.pr_list("open", REPO)
+    local ns = vim.api.nvim_get_namespaces()["gh"]
+    local row = 0
+    for i, l in ipairs(T.lines(buf)) do
+      if l:find("#7", 1, true) == 1 then row = i - 1 end
+    end
+    local m = vim.api.nvim_buf_get_extmarks(buf, ns, { row, 0 }, { row, 0 }, { details = true })
+    T.eq(#m, 1)
+    T.eq(m[1][4].url, "https://github.com/acme/widgets/pull/7")
+    T.eq(m[1][4].hl_group, "Special")
   end,
 
   pr_list_tab_expands_checks = function()

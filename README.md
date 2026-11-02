@@ -48,6 +48,10 @@ requests, reviews, merging, CI checks with their logs and reruns
 ([doom/gh.el](doom/gh.el)). Magit status and the git panel show the
 current branch's PR and whether its checks pass.
 
+In Neovim, URLs are real terminal links (OSC 8): Ctrl+click opens them,
+even when wrapped; Shift+Ctrl+click if a multiplexer captures the mouse.
+`vim.g.osc8_links = false` turns it off.
+
 ## Overlays
 
 Another repo can add to this setup without editing it. Link it at

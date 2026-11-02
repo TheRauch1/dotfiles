@@ -27,6 +27,22 @@ local function repo(origin)
 end
 
 return {
+  draw_sets_url = function()
+    local ui = forge.new({ name = "forge_url_test", filetype = "text", refresh = function() end })
+    local buf = vim.api.nvim_create_buf(false, true)
+    ui.S[buf] = {}
+    local b = ui.builder()
+    b:add({ { "#7", "Special", url = "https://e.test/7" }, { " name", url = "https://e.test/n" } })
+    ui.draw(buf, b)
+    local ns = vim.api.nvim_get_namespaces()["forge_url_test"]
+    local marks = vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })
+    T.eq(#marks, 2)
+    T.eq(marks[1][4].hl_group, "Special")
+    T.eq(marks[1][4].url, "https://e.test/7")
+    T.eq(marks[2][4].url, "https://e.test/n")
+    T.eq(marks[2][3], 2)
+  end,
+
   epoch_offsets = function()
     local z = forge.epoch("2026-10-29T10:51:08Z")
     T.eq(z, 1793271068)

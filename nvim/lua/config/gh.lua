@@ -142,7 +142,7 @@ local function insert_checks(b, checks, indent, pr)
     if bk == "skip" then
       skipped = skipped + 1
     else
-      b:add({ { indent }, { icon(bk)[1] .. " ", icon(bk)[2] }, { pad(check_name(c), width) .. "  " },
+      b:add({ { indent }, { icon(bk)[1] .. " ", icon(bk)[2] }, { pad(check_name(c), width) .. "  ", url = c.detailsUrl or c.targetUrl },
         { duration(c.startedAt, c.completedAt), "Comment" } }, { type = "check", check = c, pr = pr })
     end
   end
@@ -166,7 +166,7 @@ local function pr_list_render(buf)
   for _, pr in ipairs(prs) do
     local r = rollup(pr.statusCheckRollup)
     b:add({
-      { ("#%-6d"):format(pr.number), "Special" },
+      { ("#%-6d"):format(pr.number), "Special", url = pr.url },
       { (r and icon(r)[1] or " ") .. " ", r and icon(r)[2] or nil },
       review_chunk(pr),
       { pad(pr.author and pr.author.login or "", aw) .. " ", "Identifier" },
@@ -273,7 +273,7 @@ local function pr_render(buf)
   local st = S[buf]
   local pr = st.data
   local b = builder()
-  b:add({ { ("#%d "):format(pr.number), "Special" }, { pr.title or "", "Title" } })
+  b:add({ { ("#%d "):format(pr.number), "Special", url = pr.url }, { pr.title or "", "Title" } })
   local state = (pr.state or ""):lower()
   field(b, "State", {
     { state .. (pr.isDraft and " (draft)" or ""), state == "open" and "DiagnosticOk" or (state == "merged" and "Keyword" or "DiagnosticError") },
