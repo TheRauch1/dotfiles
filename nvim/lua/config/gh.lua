@@ -7,13 +7,23 @@
 local M = {}
 local api = vim.api
 local util = require("config.util")
+local forge = require("config.forge")
 
 M.refresh_interval = 15000
 M.pr_list_limit = 50
 M.run_list_limit = 30
 
-local ns = api.nvim_create_namespace("gh")
-local S = {} -- buf -> state { kind, repo, cwd, data, items, ... }
+local refresh -- forward declaration
+local S -- buf -> state { kind, repo, cwd, data, items, ... }
+local ui = forge.new({ name = "gh", filetype = "gh", interval = M.refresh_interval, refresh = function(buf)
+  -- Logs reload on their own gr only: an action elsewhere shouldn't refetch them.
+  if S[buf] and S[buf].kind ~= "log" then refresh(buf) end
+end })
+S = ui.S
+
+local decode, err_line, pad, ago, duration, icon = forge.decode, forge.err_line, forge.pad, forge.ago, forge.duration, forge.icon
+local builder, draw, loading, show_error = ui.builder, ui.draw, ui.loading, ui.show_error
+local open_buffer, item_at, keys, common_keys, watch = ui.open_buffer, ui.item_at, ui.keys, ui.common_keys, ui.watch
 
 ---------------------------------------------------------------------------
 -- Running gh
@@ -22,73 +32,20 @@ local S = {} -- buf -> state { kind, repo, cwd, data, items, ... }
 local env = { GH_PROMPT_DISABLED = "1", GH_NO_UPDATE_NOTIFIER = "1", GH_PAGER = "cat",
   NO_COLOR = "1", CLICOLOR = "0", GH_FORCE_TTY = "" }
 
+local run_gh = forge.runner({ bin = "gh", env = env,
+  missing_hint = "gh not found: install the GitHub CLI and run `gh auth login`" })
+
 --- Run gh asynchronously; cb(ok, stdout, stderr) on the main loop.
+--- opts = { repo?, cwd?, input? }; repo adds -R OWNER/REPO.
 function M.call(args, opts, cb)
-  if vim.fn.executable("gh") ~= 1 then
-    vim.notify("gh not found: install the GitHub CLI and run `gh auth login`", vim.log.levels.ERROR)
-    return
-  end
   opts = opts or {}
-  local cmd = vim.list_extend({ "gh" }, args)
-  if opts.repo then vim.list_extend(cmd, { "-R", opts.repo }) end
-  vim.system(cmd, { cwd = opts.cwd, text = true, env = env, stdin = opts.input }, function(res)
-    vim.schedule(function() cb(res.code == 0, res.stdout or "", vim.trim(res.stderr or "")) end)
-  end)
-end
-
-local function decode(s)
-  local ok, v = pcall(vim.json.decode, s, { luanil = { object = true, array = true } })
-  return ok and v or nil
-end
-
-local function err_line(stderr)
-  local lines = vim.split(stderr, "\n", { trimempty = true })
-  return lines[#lines] or "failed"
+  if opts.repo then args = vim.list_extend(vim.list_slice(args), { "-R", opts.repo }) end
+  run_gh(args, opts, cb)
 end
 
 ---------------------------------------------------------------------------
--- Formatting helpers
+-- Check states and URLs
 ---------------------------------------------------------------------------
-
-local function iso_epoch(s)
-  if type(s) ~= "string" then return nil end
-  local y, mo, d, h, mi, se = s:match("^(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
-  if not y then return nil end
-  if y == "0001" then return nil end
-  local t = os.time({ year = y, month = mo, day = d, hour = h, min = mi, sec = se, isdst = false })
-  local now = os.time()
-  local offset = os.difftime(now, os.time(os.date("!*t", now)))
-  return t + offset
-end
-
-local function ago(s)
-  local t = iso_epoch(s)
-  if not t then return "" end
-  local d = os.time() - t
-  if d < 60 then return "now" end
-  if d < 3600 then return math.floor(d / 60) .. "m" end
-  if d < 86400 then return math.floor(d / 3600) .. "h" end
-  if d < 86400 * 30 then return math.floor(d / 86400) .. "d" end
-  if d < 86400 * 365 then return math.floor(d / 86400 / 30) .. "mo" end
-  return math.floor(d / 86400 / 365) .. "y"
-end
-
-local function duration(from, to)
-  local a, b = iso_epoch(from), iso_epoch(to)
-  if not a then return "" end
-  local d = (b or os.time()) - a
-  if d < 0 then return "" end
-  if d < 60 then return d .. "s" end
-  if d < 3600 then return ("%dm%02ds"):format(math.floor(d / 60), d % 60) end
-  return ("%dh%02dm"):format(math.floor(d / 3600), math.floor((d % 3600) / 60))
-end
-
-local function pad(s, n)
-  s = s or ""
-  local w = vim.fn.strdisplaywidth(s)
-  if w > n then return vim.fn.strcharpart(s, 0, n - 1) .. "…" end
-  return s .. string.rep(" ", n - w)
-end
 
 local function bucket(c)
   local status = (c.status or ""):upper()
@@ -101,32 +58,8 @@ local function bucket(c)
   return "pending"
 end
 
-local icons = {
-  pass = { "✓", "DiagnosticOk" }, fail = { "✗", "DiagnosticError" }, pending = { "●", "DiagnosticWarn" },
-  cancel = { "⊘", "Comment" }, skip = { "-", "Comment" },
-}
-local function icon(b) return icons[b] or icons.skip end
-
-local function rollup(checks)
-  if not checks or #checks == 0 then return nil end
-  local seen = {}
-  for _, c in ipairs(checks) do seen[bucket(c)] = true end
-  for _, b in ipairs({ "fail", "pending", "cancel", "pass" }) do
-    if seen[b] then return b end
-  end
-  return "skip"
-end
-
-local function counts(checks, chunks)
-  local n = {}
-  for _, c in ipairs(checks or {}) do local b = bucket(c); n[b] = (n[b] or 0) + 1 end
-  for _, b in ipairs({ "pass", "fail", "pending", "cancel", "skip" }) do
-    if n[b] then
-      table.insert(chunks, { icon(b)[1] .. " " .. n[b] .. "  ", icon(b)[2] })
-    end
-  end
-  return chunks
-end
+local function rollup(checks) return forge.rollup(checks, bucket) end
+local function counts(checks, chunks) return forge.counts(checks, bucket, chunks) end
 
 local function check_name(c)
   if c.context then return c.context end
@@ -134,16 +67,7 @@ local function check_name(c)
   return c.name or "?"
 end
 
-local rank = { fail = 0, pending = 1, cancel = 2, pass = 3, skip = 4 }
-local function sort_checks(checks)
-  local out = vim.deepcopy(checks or {})
-  table.sort(out, function(a, b)
-    local ra, rb = rank[bucket(a)], rank[bucket(b)]
-    if ra ~= rb then return ra < rb end
-    return check_name(a) < check_name(b)
-  end)
-  return out
-end
+local function sort_checks(checks) return forge.sort_by_bucket(checks, bucket, check_name) end
 
 local function pending(checks)
   for _, c in ipairs(checks or {}) do
@@ -165,106 +89,8 @@ local function repo_from_url(url)
 end
 
 ---------------------------------------------------------------------------
--- Buffers
+-- Context
 ---------------------------------------------------------------------------
-
-local function builder()
-  local b = { lines = {}, hls = {}, items = {} }
-  function b:add(chunks, item)
-    if type(chunks) == "string" then chunks = { { chunks } } end
-    local line = ""
-    for _, c in ipairs(chunks) do
-      local text = (c[1] or ""):gsub("\n", " ")
-      if c[2] and #text > 0 then table.insert(self.hls, { #self.lines, #line, #line + #text, c[2] }) end
-      line = line .. text
-    end
-    table.insert(self.lines, line)
-    if item then self.items[#self.lines] = item end
-  end
-  function b:text(text, indent, hl)
-    text = (text or ""):gsub("\r", "")
-    for _, l in ipairs(vim.split(text, "\n", { plain = true })) do
-      self:add({ { (indent or "") .. l, hl } })
-    end
-  end
-  return b
-end
-
-local function draw(buf, b)
-  if not api.nvim_buf_is_valid(buf) then return end
-  local views = {}
-  for _, win in ipairs(vim.fn.win_findbuf(buf)) do
-    views[win] = api.nvim_win_call(win, vim.fn.winsaveview)
-  end
-  vim.bo[buf].modifiable = true
-  api.nvim_buf_set_lines(buf, 0, -1, false, b.lines)
-  vim.bo[buf].modifiable = false
-  vim.bo[buf].modified = false
-  api.nvim_buf_clear_namespace(buf, ns, 0, -1)
-  for _, h in ipairs(b.hls) do
-    pcall(api.nvim_buf_set_extmark, buf, ns, h[1], h[2], { end_col = h[3], hl_group = h[4] })
-  end
-  S[buf].items = b.items
-  for win, view in pairs(views) do
-    if api.nvim_win_is_valid(win) then api.nvim_win_call(win, function() vim.fn.winrestview(view) end) end
-  end
-end
-
-local function loading(buf, what)
-  local b = builder()
-  b:add({ { "Loading " .. what .. "…", "Comment" } })
-  draw(buf, b)
-end
-
-local function show_error(buf, stderr, hint)
-  local b = builder()
-  b:add({ { "gh: " .. err_line(stderr), "DiagnosticError" } })
-  b:add("")
-  b:text(stderr, "  ", "Comment")
-  if hint then b:add(""); b:add({ { hint, "Comment" } }) end
-  b:add({ { "gr tries again, q goes back.", "Comment" } })
-  draw(buf, b)
-end
-
-local function stop_timer(st)
-  if st and st.timer then st.timer:stop(); st.timer:close(); st.timer = nil end
-end
-
---- Find or create a gh buffer and show it in the main window.
-local function open_buffer(name, kind, st)
-  local buf = vim.fn.bufnr("^" .. vim.pesc(name) .. "$")
-  if buf == -1 or not S[buf] then
-    buf = api.nvim_create_buf(true, true)
-    api.nvim_buf_set_name(buf, name)
-    vim.bo[buf].buftype = "nofile"
-    vim.bo[buf].bufhidden = "hide"
-    vim.bo[buf].swapfile = false
-    vim.bo[buf].filetype = "gh"
-    vim.bo[buf].modifiable = false
-    api.nvim_create_autocmd("BufWipeout", { buffer = buf, callback = function() stop_timer(S[buf]); S[buf] = nil end })
-  end
-  stop_timer(S[buf])
-  S[buf] = vim.tbl_extend("force", { kind = kind, items = {} }, st)
-  -- Don't open inside the sidebar.
-  local win = api.nvim_get_current_win()
-  if vim.bo[api.nvim_win_get_buf(win)].filetype == "neo-tree" then
-    win = require("config.sidebar").main_window() or win
-    api.nvim_set_current_win(win)
-  end
-  api.nvim_win_set_buf(win, buf)
-  vim.wo[win].wrap = false
-  vim.wo[win].number = false
-  vim.wo[win].relativenumber = false
-  vim.wo[win].signcolumn = "no"
-  vim.wo[win].cursorline = true
-  return buf
-end
-
-local function item_at(buf)
-  local st = S[buf]
-  if not st then return nil end
-  return st.items[api.nvim_win_get_cursor(0)[1]]
-end
 
 --- Where gh runs: the repo of the current file, or anywhere if OWNER/REPO is given.
 local function context(repo)
@@ -281,50 +107,6 @@ end
 
 local function repo_name(st)
   return st.repo or vim.fs.basename(st.cwd or vim.fn.getcwd())
-end
-
-local function copy_url(url)
-  if url then util.copy(url) else vim.notify("No URL here") end
-end
-
-local refresh -- forward declaration
-
--- Re-fetch every few seconds while CI runs; say when it finishes.
-local function watch(buf, is_pending, done_msg)
-  local st = S[buf]
-  if not st then return end
-  if is_pending then
-    st.watching = true
-    if not st.timer then
-      st.timer = vim.uv.new_timer()
-      st.timer:start(M.refresh_interval, M.refresh_interval, vim.schedule_wrap(function()
-        if not api.nvim_buf_is_valid(buf) then return stop_timer(st) end
-        if #vim.fn.win_findbuf(buf) > 0 then refresh(buf) end
-      end))
-    end
-  else
-    if st.watching and done_msg then vim.notify(done_msg) end
-    st.watching = false
-    stop_timer(st)
-  end
-end
-
----------------------------------------------------------------------------
--- Common keys
----------------------------------------------------------------------------
-
-local function keys(buf, list)
-  for _, k in ipairs(list) do
-    vim.keymap.set("n", k[1], k[2], { buffer = buf, desc = k[3], nowait = true, silent = true })
-  end
-end
-
-local function common_keys(buf)
-  keys(buf, {
-    { "gr", function() refresh(buf) end, "Refresh" },
-    { "q", function() Snacks.bufdelete({ buf = buf, wipe = true }) end, "Back" },
-    { "?", function() require("which-key").show({ global = false }) end, "Keys in this buffer" },
-  })
 end
 
 ---------------------------------------------------------------------------
@@ -453,8 +235,8 @@ function M.pr_list(filter, repo)
     end, "Search" },
     { "d", function() local p = pr(); if p then M.pr_diff(p.number, S[buf]) end end, "Diff" },
     { "c", function() local p = pr(); if p then M.pr_checkout(p.number, S[buf]) end end, "Check out branch" },
-    { "o", function() local p = pr(); copy_url(p and p.url) end, "Copy URL" },
-    { "Y", function() local p = pr(); copy_url(p and p.url) end, "Copy URL" },
+    { "o", function() local p = pr(); forge.copy_url(p and p.url) end, "Copy URL" },
+    { "Y", function() local p = pr(); forge.copy_url(p and p.url) end, "Copy URL" },
     { "L", function() local it = item_at(buf); if it and it.check then M.log(it.check, S[buf]) end end, "Log of check" },
   })
   loading(buf, "pull requests")
@@ -621,8 +403,8 @@ function M.pr_view(selector, repo, cwd)
       local url = st().data and st().data.url
       if url then vim.cmd("Octo " .. url) end
     end, "Open in octo.nvim (line comments)" },
-    { "o", function() copy_url(st().data and st().data.url) end, "Copy URL" },
-    { "Y", function() copy_url(st().data and st().data.url) end, "Copy URL" },
+    { "o", function() forge.copy_url(st().data and st().data.url) end, "Copy URL" },
+    { "Y", function() forge.copy_url(st().data and st().data.url) end, "Copy URL" },
   })
   loading(buf, selector and ("#" .. tostring(selector)) or "this branch's pull request")
   pr_fetch(buf)
@@ -644,121 +426,38 @@ end
 function M.pr_diff(number, st, file)
   if not number then return end
   local name = ("gh://%s/pull/%s/diff"):format(repo_name(st), number)
-  local buf = vim.fn.bufnr("^" .. vim.pesc(name) .. "$")
-  if buf == -1 then
-    buf = api.nvim_create_buf(true, true)
-    api.nvim_buf_set_name(buf, name)
-    vim.bo[buf].buftype = "nofile"
-    vim.bo[buf].bufhidden = "hide"
-    vim.bo[buf].swapfile = false
-    vim.bo[buf].filetype = "diff"
-    local function jump(dir)
-      local l = vim.fn.search("^diff --git ", dir > 0 and "W" or "bW")
-      if l > 0 then vim.cmd("normal! zt") end
-    end
-    keys(buf, {
-      { "q", function() Snacks.bufdelete({ buf = buf, wipe = true }) end, "Back" },
-      { "]f", function() jump(1) end, "Next file" },
-      { "[f", function() jump(-1) end, "Previous file" },
-      { "]]", function() jump(1) end, "Next file" },
-      { "[[", function() jump(-1) end, "Previous file" },
-    })
-  end
-  api.nvim_win_set_buf(0, buf)
-  vim.bo[buf].modifiable = true
-  api.nvim_buf_set_lines(buf, 0, -1, false, { "Loading diff of #" .. number .. "…" })
-  M.call({ "pr", "diff", tostring(number), "--color", "never" }, { repo = st.repo, cwd = st.cwd }, function(ok, out, err)
-    if not api.nvim_buf_is_valid(buf) then return end
-    vim.bo[buf].modifiable = true
-    api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(ok and out or ("gh: " .. err), "\n", { plain = true }))
-    vim.bo[buf].modifiable = false
-    vim.bo[buf].modified = false
-    if file then
-      for _, win in ipairs(vim.fn.win_findbuf(buf)) do
-        api.nvim_win_call(win, function()
-          vim.fn.cursor(1, 1)
-          if vim.fn.search("^diff --git a/.* b/" .. vim.fn.escape(file, "\\/.*$^~[]") .. "$", "W") > 0 then
-            vim.cmd("normal! zt")
-          end
-        end)
-      end
-    end
-  end)
+  return ui.diff_buffer(name, function(cb)
+    M.call({ "pr", "diff", tostring(number), "--color", "never" }, { repo = st.repo, cwd = st.cwd }, cb)
+  end, file, "diff of #" .. number)
 end
 
 local function act(args, st, done, input)
-  vim.notify("gh " .. table.concat(vim.list_slice(args, 1, 3), " ") .. "…")
-  M.call(args, { repo = st.repo, cwd = st.cwd, input = input }, function(ok, _, err)
-    if not ok then return vim.notify("gh: " .. err_line(err), vim.log.levels.ERROR) end
-    vim.notify(done)
-    for buf, s in pairs(S) do
-      if api.nvim_buf_is_valid(buf) and #vim.fn.win_findbuf(buf) > 0 and (s.kind == "pr" or s.kind == "pr_list" or s.kind:match("^run")) then
-        refresh(buf)
-      end
-    end
-  end)
+  ui.act(function(cb) M.call(args, { repo = st.repo, cwd = st.cwd, input = input }, cb) end,
+    "gh " .. table.concat(vim.list_slice(args, 1, 3), " "), done)
 end
-
-local function confirm(prompt, yes, fn)
-  vim.ui.select({ yes, "Cancel" }, { prompt = prompt }, function(choice)
-    if choice == yes then fn() end
-  end)
-end
-
---- A split to write a comment / review in markdown. C-c C-c sends, C-c C-k cancels.
-local function compose(title, send, initial)
-  vim.cmd("botright new")
-  local buf = api.nvim_get_current_buf()
-  vim.bo[buf].buftype = "nofile"
-  vim.bo[buf].bufhidden = "wipe"
-  vim.bo[buf].swapfile = false
-  vim.bo[buf].filetype = "markdown"
-  api.nvim_buf_set_name(buf, "gh://compose/" .. title:gsub("[^%w#]+", "-") .. "-" .. buf)
-  vim.wo.winbar = " " .. title .. "   C-c C-c send · C-c C-k cancel"
-  vim.wo.wrap = true
-  api.nvim_win_set_height(0, math.max(8, math.floor(vim.o.lines / 3)))
-  if initial then api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(initial, "\n")) end
-  local function do_send()
-    local text = vim.trim(table.concat(api.nvim_buf_get_lines(buf, 0, -1, false), "\n"))
-    vim.cmd("stopinsert")
-    api.nvim_buf_delete(buf, { force = true })
-    send(text)
-  end
-  local function cancel()
-    vim.cmd("stopinsert")
-    api.nvim_buf_delete(buf, { force = true })
-    vim.notify("Cancelled")
-  end
-  for _, mode in ipairs({ "n", "i" }) do
-    vim.keymap.set(mode, "<C-c><C-c>", do_send, { buffer = buf, desc = "Send" })
-    vim.keymap.set(mode, "<C-c><C-k>", cancel, { buffer = buf, desc = "Cancel" })
-  end
-  vim.cmd("startinsert")
-  return buf
-end
-M.compose = compose
+M.compose = forge.compose
 
 function M.pr_approve(st)
   local n = tostring(st.number)
-  confirm("Approve #" .. n .. "?", "Approve", function()
+  forge.confirm("Approve #" .. n .. "?", "Approve", function()
     act({ "pr", "review", n, "--approve" }, st, "Approved #" .. n)
   end)
 end
 
 function M.pr_request_changes(st)
   local n = tostring(st.number)
-  compose("Request changes on #" .. n, function(text)
+  forge.compose("Request changes on #" .. n, function(text)
     if text == "" then return vim.notify("Empty review: not sent", vim.log.levels.WARN) end
     act({ "pr", "review", n, "--request-changes", "--body-file", "-" }, st, "Requested changes on #" .. n, text)
-  end)
+  end, nil, "gh")
 end
 
 function M.pr_comment(st)
   local n = tostring(st.number)
-  compose("Comment on #" .. n, function(text)
+  forge.compose("Comment on #" .. n, function(text)
     if text == "" then return vim.notify("Empty comment: not sent", vim.log.levels.WARN) end
     act({ "pr", "comment", n, "--body-file", "-" }, st, "Commented on #" .. n, text)
-  end)
+  end, nil, "gh")
 end
 
 function M.pr_checkout(number, st)
@@ -782,7 +481,7 @@ function M.pr_merge(st)
   }
   vim.ui.select(choices, { prompt = "Merge #" .. n, format_item = function(c) return c[1] end }, function(c)
     if not c then return end
-    confirm(c[1] .. " #" .. n .. "?", "Yes, merge", function()
+    forge.confirm(c[1] .. " #" .. n .. "?", "Yes, merge", function()
       act(vim.list_extend({ "pr", "merge", n }, c[2]), st,
         vim.tbl_contains(c[2], "--auto") and ("#" .. n .. " will merge when its checks pass") or ("Merged #" .. n))
     end)
@@ -792,7 +491,7 @@ end
 function M.rerun_check(check, st)
   local repo, _, job = job_url_parts(check.detailsUrl or check.targetUrl)
   if not job then return vim.notify("Not a GitHub Actions check", vim.log.levels.WARN) end
-  confirm("Rerun " .. check_name(check) .. "?", "Rerun", function()
+  forge.confirm("Rerun " .. check_name(check) .. "?", "Rerun", function()
     act({ "run", "rerun", "--job", job }, { repo = repo, cwd = st.cwd }, "Rerunning " .. check_name(check))
   end)
 end
@@ -807,7 +506,7 @@ function M.rerun_pr(st)
     end
   end
   if #runs == 0 then return vim.notify("No failed GitHub Actions checks to rerun") end
-  confirm(("Rerun failed jobs of %d run%s?"):format(#runs, #runs > 1 and "s" or ""), "Rerun", function()
+  forge.confirm(("Rerun failed jobs of %d run%s?"):format(#runs, #runs > 1 and "s" or ""), "Rerun", function()
     for _, r in ipairs(runs) do
       act({ "run", "rerun", r[2], "--failed" }, { repo = r[1], cwd = st.cwd }, "Rerunning failed jobs of run " .. r[2])
     end
@@ -915,7 +614,7 @@ function M.log(check, parent, run_id)
     repo, run, job = parent.repo or repo_from_url(url), tostring(run_id), tostring(check.databaseId)
   end
   if not job then
-    if url then copy_url(url); vim.notify("Not a GitHub Actions job: copied its URL instead") end
+    if url then forge.copy_url(url); vim.notify("Not a GitHub Actions job: copied its URL instead") end
     return
   end
   local name = check_name(check)
@@ -927,7 +626,7 @@ function M.log(check, parent, run_id)
     { "q", function() Snacks.bufdelete({ buf = buf, wipe = true }) end, "Back" },
     { "]e", function() log_jump(buf, 1) end, "Next error" },
     { "[e", function() log_jump(buf, -1) end, "Previous error" },
-    { "o", function() copy_url(S[buf].url) end, "Copy URL" },
+    { "o", function() forge.copy_url(S[buf].url) end, "Copy URL" },
     { "?", function() require("which-key").show({ global = false }) end, "Keys in this buffer" },
   })
   log_fetch(buf)
@@ -1000,18 +699,18 @@ function M.run_list(repo, branch)
     { "R", function()
       local r = run()
       if not r then return end
-      confirm("Rerun failed jobs of " .. (r.workflowName or "run") .. "?", "Rerun", function()
+      forge.confirm("Rerun failed jobs of " .. (r.workflowName or "run") .. "?", "Rerun", function()
         act({ "run", "rerun", tostring(r.databaseId), "--failed" }, S[buf], "Rerunning the failed jobs")
       end)
     end, "Rerun failed jobs" },
     { "X", function()
       local r = run()
       if not r then return end
-      confirm("Cancel run of " .. (r.workflowName or "?") .. "?", "Cancel the run", function()
+      forge.confirm("Cancel run of " .. (r.workflowName or "?") .. "?", "Cancel the run", function()
         act({ "run", "cancel", tostring(r.databaseId) }, S[buf], "Cancelled")
       end)
     end, "Cancel run" },
-    { "o", function() local r = run(); copy_url(r and r.url) end, "Copy URL" },
+    { "o", function() local r = run(); forge.copy_url(r and r.url) end, "Copy URL" },
   })
   loading(buf, "workflow runs")
   run_list_fetch(buf)
@@ -1102,21 +801,21 @@ function M.run_view(id, repo, cwd)
       local j = job()
       local st = S[buf]
       if j and bucket(j) == "fail" then
-        confirm("Rerun job " .. (j.name or "") .. "?", "Rerun", function()
+        forge.confirm("Rerun job " .. (j.name or "") .. "?", "Rerun", function()
           act({ "run", "rerun", "--job", tostring(j.databaseId) }, st, "Rerunning " .. (j.name or "job"))
         end)
       else
-        confirm("Rerun the failed jobs of this run?", "Rerun", function()
+        forge.confirm("Rerun the failed jobs of this run?", "Rerun", function()
           act({ "run", "rerun", tostring(st.id), "--failed" }, st, "Rerunning the failed jobs")
         end)
       end
     end, "Rerun failed jobs" },
     { "X", function()
-      confirm("Cancel this run?", "Cancel the run", function()
+      forge.confirm("Cancel this run?", "Cancel the run", function()
         act({ "run", "cancel", tostring(S[buf].id) }, S[buf], "Cancelled")
       end)
     end, "Cancel run" },
-    { "o", function() copy_url(S[buf].data and S[buf].data.url) end, "Copy URL" },
+    { "o", function() forge.copy_url(S[buf].data and S[buf].data.url) end, "Copy URL" },
   })
   loading(buf, "run " .. id)
   run_fetch(buf)
@@ -1142,7 +841,7 @@ function M.pr_create()
       break
     end
   end
-  compose("New PR from " .. branch .. " (first line = title)", function(text)
+  forge.compose("New PR from " .. branch .. " (first line = title)", function(text)
     local title, body = text:match("^([^\n]*)\n?(.*)$")
     if not title or vim.trim(title) == "" then return vim.notify("No title: not created", vim.log.levels.WARN) end
     vim.notify("Pushing " .. branch .. "…")
@@ -1158,7 +857,7 @@ function M.pr_create()
           end)
       end)
     end)
-  end, table.concat(initial, "\n"))
+  end, table.concat(initial, "\n"), "gh")
 end
 
 ---------------------------------------------------------------------------
