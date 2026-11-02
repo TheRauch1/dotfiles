@@ -42,6 +42,17 @@ return {
     T.eq(forge.pad("ü", 3), "ü  ")
   end,
 
+  watch_reads_interval_at_start = function()
+    local ms = 1000
+    local ui = forge.new({ name = "t", filetype = "t", refresh = function() end, interval = function() return ms end })
+    local buf = ui.open_buffer("t://w", "list", {})
+    ms = 4321 -- set after new{}, like require("config.gh").refresh_interval = N
+    ui.watch(buf, true)
+    T.eq(ui.S[buf].timer:get_repeat(), 4321)
+    ui.watch(buf, false)
+    T.eq(ui.S[buf].timer, nil)
+  end,
+
   act_refreshes_visible = function()
     local refreshed = {}
     local ui = forge.new({ name = "t", filetype = "t", refresh = function(b) table.insert(refreshed, b) end })

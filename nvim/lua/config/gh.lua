@@ -15,10 +15,13 @@ M.run_list_limit = 30
 
 local refresh -- forward declaration
 local S -- buf -> state { kind, repo, cwd, data, items, ... }
-local ui = forge.new({ name = "gh", filetype = "gh", interval = M.refresh_interval, refresh = function(buf)
-  -- Logs reload on their own gr only: an action elsewhere shouldn't refetch them.
-  if S[buf] and S[buf].kind ~= "log" then refresh(buf) end
-end })
+local ui = forge.new({ name = "gh", filetype = "gh",
+  interval = function() return M.refresh_interval end, -- read when a timer starts
+  refresh = function(buf)
+    -- Logs reload on their own gr only: an action elsewhere shouldn't refetch them.
+    if S[buf] and S[buf].kind ~= "log" then refresh(buf) end
+  end,
+})
 S = ui.S
 
 local decode, err_line, pad, ago, duration, icon = forge.decode, forge.err_line, forge.pad, forge.ago, forge.duration, forge.icon

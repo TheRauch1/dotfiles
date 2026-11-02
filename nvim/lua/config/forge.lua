@@ -176,12 +176,17 @@ local function keys(buf, list)
 end
 
 --- A UI: its buffers (ui.S: buf -> state { kind, items, ... }), highlights
---- and keys. o = { name, filetype, refresh = fun(buf), interval? }.
+--- and keys. o = { name, filetype, refresh = fun(buf), interval? }; interval
+--- (ms, default 15000) may be a function, read each time a timer starts.
 function M.new(o)
   local ui = { name = o.name, S = {}, builder = builder, keys = keys }
   local S = ui.S
   local ns = api.nvim_create_namespace(o.name)
-  local interval = o.interval or 15000
+  local function interval()
+    local v = o.interval or 15000
+    if type(v) == "function" then return v() end
+    return v
+  end
 
   function ui.draw(buf, b)
     if not api.nvim_buf_is_valid(buf) then return end
@@ -262,8 +267,9 @@ function M.new(o)
     if is_pending then
       st.watching = true
       if not st.timer then
+        local ms = interval()
         st.timer = vim.uv.new_timer()
-        st.timer:start(interval, interval, vim.schedule_wrap(function()
+        st.timer:start(ms, ms, vim.schedule_wrap(function()
           if not api.nvim_buf_is_valid(buf) then return stop_timer(st) end
           if #vim.fn.win_findbuf(buf) > 0 then o.refresh(buf) end
         end))
