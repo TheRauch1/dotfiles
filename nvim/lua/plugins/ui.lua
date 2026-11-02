@@ -31,7 +31,7 @@ return {
         { "<leader>c", group = "code" },
         { "<leader>f", group = "file" },
         { "<leader>g", group = "git" },
-        { "<leader>gp", group = "GitHub PRs & CI" },
+        { "<leader>gp", group = "PRs & CI" },
         { "<leader>h", group = "help" },
         { "<leader>o", group = "open" },
         { "<leader>p", group = "project" },

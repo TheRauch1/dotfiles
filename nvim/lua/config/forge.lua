@@ -10,6 +10,47 @@ local api = vim.api
 local util = require("config.util")
 
 ---------------------------------------------------------------------------
+-- Registry: which forge UI SPC g p opens
+---------------------------------------------------------------------------
+
+--- Registered forges, in registration order: { name, detect, module }.
+M.registry = {}
+
+--- Add a forge; detect(origin_url) says whether it owns the repo, module is
+--- the Lua module with pr_list, pr_view_current, ... (like config.gh).
+function M.register(f) table.insert(M.registry, f) end
+
+--- The origin URL of the repo at cwd (default: the current file's repo), or
+--- nil when there is none.
+function M.remote_url(cwd)
+  local ok, res = pcall(function()
+    return vim.system({ "git", "-C", cwd or util.root(), "remote", "get-url", "origin" }, { text = true }):wait()
+  end)
+  if not ok or res.code ~= 0 then return nil end
+  local url = vim.trim(res.stdout or "")
+  return url ~= "" and url or nil
+end
+
+--- Call fn(...) on the first registered forge matching the repo's origin,
+--- else on config.gh.
+function M.dispatch(fn, ...)
+  local url = M.remote_url()
+  local name, module = "GitHub", "config.gh"
+  for _, f in ipairs(url and M.registry or {}) do
+    if f.detect(url) then
+      name, module = f.name, f.module
+      break
+    end
+  end
+  local mod = require(module)
+  if type(mod[fn]) ~= "function" then
+    vim.notify("Not available for " .. name, vim.log.levels.WARN)
+    return
+  end
+  return mod[fn](...)
+end
+
+---------------------------------------------------------------------------
 -- Running a CLI
 ---------------------------------------------------------------------------
 

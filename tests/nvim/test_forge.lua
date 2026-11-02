@@ -4,6 +4,28 @@ local forge = require("config.forge")
 
 local function id(x) return x end
 
+-- Runs fn inside dir with an empty registry and stubbed modules; restores all.
+local function sandbox(dir, stubs, fn)
+  local cwd, reg, saved = vim.fn.getcwd(), vim.deepcopy(forge.registry), {}
+  for k, v in pairs(stubs) do saved[k] = package.loaded[k]; package.loaded[k] = v end
+  for i = #forge.registry, 1, -1 do forge.registry[i] = nil end
+  vim.cmd.cd(dir)
+  local ok, err = pcall(fn)
+  vim.cmd.cd(cwd)
+  for k in pairs(stubs) do package.loaded[k] = saved[k] end
+  for i = #forge.registry, 1, -1 do forge.registry[i] = nil end
+  for i, r in ipairs(reg) do forge.registry[i] = r end
+  if not ok then error(err, 0) end
+end
+
+local function repo(origin)
+  local d = vim.fn.tempname()
+  vim.fn.mkdir(d, "p")
+  vim.fn.system({ "git", "-C", d, "init", "-q" })
+  if origin then vim.fn.system({ "git", "-C", d, "remote", "add", "origin", origin }) end
+  return d
+end
+
 return {
   epoch_offsets = function()
     local z = forge.epoch("2026-10-29T10:51:08Z")
@@ -66,5 +88,39 @@ return {
     table.sort(refreshed)
     T.eq(refreshed, { a, b })
     T.eq(vim.tbl_map(function(n) return n.msg end, notes), { "x…", "done" })
+  end,
+
+  dispatch_matches_remote = function()
+    local got
+    local ex = { name = "ex", module = "fake_ex", detect = function(u) return u:find("example.test", 1, true) ~= nil end }
+    sandbox(repo("https://example.test/x.git"), { fake_ex = { pr_list = function(f) got = f end } }, function()
+      forge.register(ex)
+      T.eq(forge.registry, { ex })
+      forge.dispatch("pr_list", "mine")
+    end)
+    T.eq(got, "mine")
+  end,
+
+  dispatch_falls_back_to_gh = function()
+    local dirs = { repo(nil), repo("git@github.com:a/b.git"), vim.fn.tempname() }
+    vim.fn.mkdir(dirs[3], "p")
+    for _, d in ipairs(dirs) do
+      local got
+      sandbox(d, { ["config.gh"] = { pr_list = function(f) got = f end } }, function()
+        forge.register({ name = "ex", module = "fake_ex", detect = function(u) return u:find("example.test", 1, true) ~= nil end })
+        forge.dispatch("pr_list", "open")
+      end)
+      T.eq(got, "open")
+    end
+  end,
+
+  dispatch_missing_fn = function()
+    local notes = T.notifications()
+    sandbox(repo("https://example.test/x.git"), { fake_ex = {} }, function()
+      forge.register({ name = "ex", module = "fake_ex", detect = function(u) return u:find("example.test", 1, true) ~= nil end })
+      forge.dispatch("run_list")
+    end)
+    T.eq(notes[#notes].msg, "Not available for ex")
+    T.eq(notes[#notes].level, vim.log.levels.WARN)
   end,
 }
