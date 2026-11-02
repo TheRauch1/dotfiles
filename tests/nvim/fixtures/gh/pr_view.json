@@ -1,0 +1,24 @@
+{"number": 7, "title": "Add retry to widget sync", "state": "OPEN", "author": {"login": "anna-müller"},
+ "body": "Retries the sync call on transient errors.\n\n```lua\nretry(sync, { times = 3 })\n```\n\nCloses #2",
+ "headRefName": "feature/widget-retry", "baseRefName": "main", "isDraft": false, "reviewDecision": "REVIEW_REQUIRED",
+ "latestReviews": [
+   {"author": {"login": "bob"}, "state": "CHANGES_REQUESTED", "submittedAt": "2026-11-02T10:00:00Z"},
+   {"author": {"login": "carol"}, "state": "APPROVED", "submittedAt": "2026-11-01T12:00:00Z"}
+ ],
+ "reviewRequests": [{"__typename": "User", "login": "dave"}, {"__typename": "Team", "name": "Widget Maintainers", "slug": "widget-maintainers"}],
+ "statusCheckRollup": [
+   {"__typename": "CheckRun", "name": "unit", "workflowName": "CI", "status": "COMPLETED", "conclusion": "FAILURE",
+    "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:34:12Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4242/job/9001"},
+   {"__typename": "CheckRun", "name": "lint", "workflowName": "CI", "status": "COMPLETED", "conclusion": "SUCCESS",
+    "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:30:45Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4242/job/9002"},
+   {"__typename": "CheckRun", "name": "integration", "workflowName": "CI", "status": "IN_PROGRESS", "conclusion": "",
+    "startedAt": "2026-11-02T11:55:00Z", "completedAt": "0001-01-01T00:00:00Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4242/job/9003"}
+ ],
+ "mergeable": "MERGEABLE", "mergeStateStatus": "UNSTABLE", "additions": 15, "deletions": 3, "changedFiles": 2,
+ "files": [{"path": "src/sync.lua", "additions": 12, "deletions": 3}, {"path": "README.md", "additions": 3, "deletions": 0}],
+ "url": "https://github.com/acme/widgets/pull/7", "createdAt": "2026-10-31T12:00:00Z",
+ "comments": [
+   {"author": {"login": "bob"}, "createdAt": "2026-11-02T09:00:00Z", "body": "Could we make the retry count configurable?"},
+   {"author": {"login": "anna-müller"}, "createdAt": "2026-11-02T09:30:00Z", "body": "Good idea.\nWill add an option."}
+ ],
+ "labels": [{"name": "enhancement"}, {"name": "sync"}]}

@@ -1,0 +1,26 @@
+[
+  {"number": 7, "title": "Add retry to widget sync", "author": {"login": "anna-müller"}, "headRefName": "feature/widget-retry",
+   "isDraft": false, "reviewDecision": "REVIEW_REQUIRED", "state": "OPEN", "updatedAt": "2026-11-02T11:40:00Z",
+   "url": "https://github.com/acme/widgets/pull/7",
+   "statusCheckRollup": [
+     {"__typename": "CheckRun", "name": "unit", "workflowName": "CI", "status": "COMPLETED", "conclusion": "FAILURE",
+      "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:34:12Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4242/job/9001"},
+     {"__typename": "CheckRun", "name": "lint", "workflowName": "CI", "status": "COMPLETED", "conclusion": "SUCCESS",
+      "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:30:45Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4242/job/9002"},
+     {"__typename": "CheckRun", "name": "integration", "workflowName": "CI", "status": "IN_PROGRESS", "conclusion": "",
+      "startedAt": "2026-11-02T11:55:00Z", "completedAt": "0001-01-01T00:00:00Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4242/job/9003"},
+     {"__typename": "CheckRun", "name": "docs", "workflowName": "Docs", "status": "COMPLETED", "conclusion": "SKIPPED",
+      "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:30:02Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4243/job/9004"}
+   ]},
+  {"number": 5, "title": "WIP: rework gadget cache", "author": {"login": "bob"}, "headRefName": "gadget-cache",
+   "isDraft": true, "reviewDecision": "", "state": "OPEN", "updatedAt": "2026-10-30T09:00:00Z",
+   "url": "https://github.com/acme/widgets/pull/5", "statusCheckRollup": []},
+  {"number": 3, "title": "Fix typo in README", "author": {"login": "carol"}, "headRefName": "docs/typo",
+   "isDraft": false, "reviewDecision": "APPROVED", "state": "OPEN", "updatedAt": "2026-09-01T08:00:00Z",
+   "url": "https://github.com/acme/widgets/pull/3",
+   "statusCheckRollup": [
+     {"__typename": "CheckRun", "name": "unit", "workflowName": "CI", "status": "COMPLETED", "conclusion": "SUCCESS",
+      "startedAt": "2026-09-01T07:50:00Z", "completedAt": "2026-09-01T07:52:30Z", "detailsUrl": "https://github.com/acme/widgets/actions/runs/4100/job/8001"},
+     {"__typename": "StatusContext", "context": "ci/legacy", "state": "SUCCESS", "startedAt": "2026-09-01T07:50:00Z"}
+   ]}
+]

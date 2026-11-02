@@ -229,6 +229,8 @@ finishes.
 | `SPC :`   | run any command          |
 | `SPC q q` | save all and quit        |
 
+URLs are clickable (OSC 8): Ctrl+click, or Shift+Ctrl+click if a multiplexer captures the mouse.
+
 ## iPad setup tips
 
 - Blink Shell: Settings → Keyboard → Caps Lock → Esc, and Option as Meta.

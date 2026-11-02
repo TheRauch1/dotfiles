@@ -1,0 +1,12 @@
+0:0-13 Title
+1:0-95 Comment
+3:0-4 DiagnosticWarn
+3:13-34 Constant
+3:34-39 Comment
+3:4-13 Keyword
+3:63-77 Comment
+4:0-4 DiagnosticOk
+4:13-34 Constant
+4:34-39 Comment
+4:4-13 Keyword
+4:57-63 Comment

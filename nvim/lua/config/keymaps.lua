@@ -89,10 +89,10 @@ leader("gS", pick("git_status"), "Changed files")
 leader("gb", function() Snacks.picker.git_branches({ cwd = util.root() }) end, "Switch branch")
 leader("go", function() Snacks.gitbrowse() end, "Open on GitHub (copies URL)", { "n", "x" })
 
--- GitHub (gh CLI), like Doom's SPC g p ------------------------------------
+-- PRs & CI of the origin's forge (gh by default), like Doom's SPC g p ---
 local function gh(fn, ...)
   local args = { ... }
-  return function() require("config.gh")[fn](unpack(args)) end
+  return function() require("config.forge").dispatch(fn, unpack(args)) end
 end
 leader("gpl", gh("pr_list", "open"), "Open pull requests")
 leader("gpm", gh("pr_list", "mine"), "My pull requests")

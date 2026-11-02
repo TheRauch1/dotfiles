@@ -1,0 +1,39 @@
+#7 Add retry to widget sync
+State     open  by anna-müller  main ← feature/widget-retry  2d
+Review    ● review required
+Merge     unstable
+Checks    ✓ 1  ✗ 1  ● 1  
+Labels    enhancement, sync
+URL       https://github.com/acme/widgets/pull/7
+d diff  c checkout  a approve  r request changes  C comment  m merge  L log  R rerun failed  O octo  o copy URL  ? keys
+
+Reviews
+  bob                  ✗ changes requested  2h
+  carol                ✓ approved  1d
+  dave                 ● requested
+  Widget Maintainers   ● requested
+
+Checks  ✓ 1  ✗ 1  ● 1  
+  ✗ CI / unit         4m12s
+  ● CI / integration  5m00s
+  ✓ CI / lint         45s
+
+Files (2)  +15 -3
+  +12   -3    src/sync.lua
+  +3    -0    README.md
+
+Description
+  Retries the sync call on transient errors.
+  
+  ```lua
+  retry(sync, { times = 3 })
+  ```
+  
+  Closes #2
+
+Comments (2)
+  bob  3h
+    Could we make the retry count configurable?
+  anna-müller  2h
+    Good idea.
+    Will add an option.
