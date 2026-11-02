@@ -48,6 +48,26 @@ requests, reviews, merging, CI checks with their logs and reruns
 ([doom/gh.el](doom/gh.el)). Magit status and the git panel show the
 current branch's PR and whether its checks pass.
 
+## Overlays
+
+Another repo can add to this setup without editing it. Link it at
+`~/.config/dotfiles.d/<name>/` (or under `$DOTFILES_D`); everything in it
+is optional:
+
+| In the overlay                | Used by   | What happens |
+|-------------------------------|-----------|--------------|
+| `nvim/lua/overlay/<mod>.lua`  | Neovim    | `<overlay>/nvim` joins the runtimepath after lazy.nvim has started, then every `overlay/*.lua` is required (overlays and modules sorted by name) once the keymaps are set. A module that fails is reported with one error message and startup continues. |
+| `shell.sh`                    | bash, zsh | `doom/shell.zsh` sources every `dotfiles.d/*/shell.sh` at its end. |
+| `mise.toml`                   | mise      | The overlay's `setup.sh` links it to `~/.config/mise/conf.d/<name>.toml` (native mise feature). |
+| `setup.sh`                    | you       | Run by hand: links the overlay into `dotfiles.d`, installs, logs in. Safe to re-run. |
+
+Overlays only add, never edit files here. Removing the
+`dotfiles.d/<name>` link (and its `conf.d` file) removes the overlay.
+
+Tests for the Neovim config run headless:
+`nvim --headless -c "luafile tests/nvim/run.lua"` (set `TEST_DIR` to run
+another directory of `test_*.lua` files, `TEST_FILTER` to pick tests).
+
 ## Language servers
 
 Optional; LSP features turn on per language when the server is on `PATH`.

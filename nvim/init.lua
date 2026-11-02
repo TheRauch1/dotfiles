@@ -56,5 +56,9 @@ if vim.uv.fs_stat(lazypath) then
   })
 end
 
+-- lazy.nvim resets the runtimepath, so overlay dirs are added after it.
+require("config.overlays").setup_rtp()
+
 require("config.keymaps")
 require("config.sidebar") -- auto-shows the git panel on wide screens
+require("config.overlays").load() -- overlay modules, after everything they may extend

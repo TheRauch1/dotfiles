@@ -21,3 +21,8 @@ pd() {
 
 export EDITOR="emacsclient -t -a ''"
 export VISUAL="$EDITOR"
+
+# Overlays (~/.config/dotfiles.d/<name>/shell.sh), see README "Overlays".
+for f in $(find -L "${DOTFILES_D:-$HOME/.config/dotfiles.d}" -mindepth 2 -maxdepth 2 -name shell.sh 2>/dev/null | sort); do
+  . "$f"
+done
