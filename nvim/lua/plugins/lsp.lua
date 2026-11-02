@@ -100,7 +100,9 @@ return {
         documentation = { auto_show = true, auto_show_delay_ms = 300, window = { border = "rounded" } },
         menu = { border = "rounded", draw = { columns = { { "label", "label_description", gap = 1 }, { "kind" } } } },
       },
-      cmdline = { enabled = true, keymap = { preset = "cmdline" }, completion = { menu = { auto_show = true } } },
+      -- No preselect: the first Tab fills in the first item instead of skipping to the second.
+      cmdline = { enabled = true, keymap = { preset = "cmdline" },
+        completion = { menu = { auto_show = true }, list = { selection = { preselect = false } } } },
       signature = { enabled = true, window = { border = "rounded" } },
       sources = { default = { "lsp", "path", "snippets", "buffer" } },
       fuzzy = { implementation = "prefer_rust" }, -- quietly falls back to Lua if the binary is missing
