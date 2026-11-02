@@ -39,11 +39,51 @@ return {
     T.eq(links.find("http://a.b")[1].url, "http://a.b")
   end,
 
+  find_markdown_link_text = function()
+    local found = links.find("see [the docs](https://example.com/a) now")
+    local text, url
+    for _, m in ipairs(found) do
+      if m.s == 5 and m.e == 13 then text = m end
+      if m.url == "https://example.com/a" and m.s == 15 then url = m end
+    end
+    T.ok(text and text.url == "https://example.com/a", "no entry for link text: " .. vim.inspect(found))
+    T.ok(url, "url entry kept")
+    T.eq(links.find("<https://example.com/b>")[1].url, "https://example.com/b")
+  end,
+
   provider_marks_visible_lines = function()
     vim.g.osc8_links = nil
     links.setup()
     local marks = provide(scratch({ "go to https://example.com/x now", "plain" }))
     T.eq(marks, { { row = 0, s = 6, e = 27, url = "https://example.com/x" } })
+  end,
+
+  provider_marks_markdown_link_text = function()
+    vim.g.osc8_links = nil
+    links.setup()
+    local marks = provide(scratch({ "[docs](https://example.com/x)" }))
+    T.eq(marks, {
+      { row = 0, s = 1, e = 5, url = "https://example.com/x" },
+      { row = 0, s = 7, e = 28, url = "https://example.com/x" },
+    })
+  end,
+
+  find_markdown_link_with_url_text = function()
+    local u = "https://a.test/x"
+    T.eq(links.find("[" .. u .. "](" .. u .. ")"), {
+      { s = 1, e = 17, url = u },
+      { s = 19, e = 35, url = u },
+    })
+  end,
+
+  provider_marks_nofile_markdown = function()
+    vim.g.osc8_links = nil
+    links.setup()
+    local buf = scratch({ "[docs](https://example.com/x)" })
+    vim.bo[buf].buftype = "nofile"
+    T.eq(provide(buf), {}, "plain nofile stays unmarked")
+    vim.bo[buf].filetype = "markdown"
+    T.eq(#provide(buf), 2)
   end,
 
   provider_skips_long_lines_and_special_buffers = function()

@@ -1,6 +1,11 @@
 -- Clickable URLs: Neovim turns `url` extmarks into OSC 8 hyperlinks, which
 -- terminals keep clickable even when the URL wraps across lines. A decoration
 -- provider marks every URL on the visible lines; nothing is stored.
+-- Markdown links `[text](url)` also mark `text` (the part between the
+-- brackets) with the same url: a Markdown renderer conceals the url part, so
+-- the visible text must be clickable. The url span keeps its own mark too;
+-- the two spans never overlap. Autolinks `<url>` show the url itself, so the
+-- url mark already covers what is visible.
 local M = {}
 
 M.ns = vim.api.nvim_create_namespace("links")
@@ -8,12 +13,16 @@ M.ns = vim.api.nvim_create_namespace("links")
 local MAX_LINE = 3000 -- skip minified/log lines: the scan runs on every redraw
 local registered = false
 
---- URLs in a line as { s = 0-based byte col, e = exclusive end, url }.
+--- URLs in a line as { s = 0-based byte col, e = exclusive end, url },
+--- plus the text span of each Markdown link `[text](url)`, sorted by s.
 function M.find(line)
   local out, init = {}, 1
   while true do
     local s, e = line:find("https?://[%w%-._~:/?#%[%]@!$&'()*+,;=%%]+", init)
     if not s then break end
+    -- Markdown `[url](url)`: the first url ends where `](` starts.
+    local close = line:sub(s, e):find("](", 1, true)
+    if close then e = s + close - 2 end
     -- Trim what is prose, not URL: end punctuation and unbalanced closers.
     while e > s do
       local c = line:sub(e, e)
@@ -27,13 +36,25 @@ function M.find(line)
     out[#out + 1] = { s = s - 1, e = e, url = line:sub(s, e) }
     init = e + 1
   end
+  -- Link text: `[text]` immediately followed by `(` and one of the urls above.
+  local by_start = {}
+  for _, m in ipairs(out) do by_start[m.s] = m end
+  init = 1
+  while #out > 0 do
+    local s, e = line:find("%[[^%[%]]+%]%(", init)
+    if not s then break end
+    local m = by_start[e] -- 0-based start of the char after "("
+    if m and not by_start[s] then out[#out + 1] = { s = s, e = e - 2, url = m.url } end -- [url](url): text is already a url span
+    init = e + 1
+  end
+  table.sort(out, function(a, b) return a.s < b.s end)
   return out
 end
 
 local function linkable(buf)
   if vim.g.osc8_links == false then return false end
   local bt = vim.bo[buf].buftype
-  return bt == "" or bt == "help"
+  return bt == "" or bt == "help" or (bt == "nofile" and vim.bo[buf].filetype == "markdown")
 end
 
 function M.on_win(_, _, buf) return linkable(buf) end

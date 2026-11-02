@@ -51,6 +51,8 @@ current branch's PR and whether its checks pass.
 In Neovim, URLs are real terminal links (OSC 8): Ctrl+click opens them,
 even when wrapped; Shift+Ctrl+click if a multiplexer captures the mouse.
 `vim.g.osc8_links = false` turns it off.
+Markdown renders in place (render-markdown.nvim; `SPC t m` toggles), and
+the text of `[text](url)` links is clickable too.
 
 ## Overlays
 
