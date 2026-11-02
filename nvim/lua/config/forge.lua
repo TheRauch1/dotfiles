@@ -55,11 +55,13 @@ end
 ---------------------------------------------------------------------------
 
 --- A function(args, opts, cb) that runs `bin args` asynchronously (no shell);
---- opts.input goes to stdin; cb(ok, stdout, stderr) on the main loop.
+--- opts.input goes to stdin; cb(ok, stdout, stderr) on the main loop. A
+--- missing binary gives cb(false, "", o.missing_hint).
 function M.runner(o)
   return function(args, opts, cb)
     if vim.fn.executable(o.bin) ~= 1 then
-      vim.notify(o.missing_hint, vim.log.levels.ERROR)
+      -- Callers render or notify failures; the hint is the error text.
+      vim.schedule(function() cb(false, "", o.missing_hint) end)
       return
     end
     opts = opts or {}

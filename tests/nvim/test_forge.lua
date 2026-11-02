@@ -68,6 +68,14 @@ return {
     T.eq(forge.ago(nil), "")
   end,
 
+  runner_missing_binary_calls_cb = function()
+    local run = forge.runner({ bin = "forge-test-no-such-binary", missing_hint = "no such binary: install it" })
+    local got
+    run({ "x" }, {}, function(ok, out, err) got = { ok, out, err } end)
+    T.ok(T.wait(function() return got ~= nil end), "cb was never called")
+    T.eq(got, { false, "", "no such binary: install it" })
+  end,
+
   rollup_priority = function()
     T.eq(forge.rollup({ "pass", "pending", "fail" }, id), "fail")
     T.eq(forge.rollup({ "pass", "pending" }, id), "pending")
