@@ -155,6 +155,7 @@ leader("tf", function()
   vim.notify("Format on save " .. (vim.g.format_on_save and "on" or "off"))
 end, "Format on save")
 leader("td", function() vim.diagnostic.enable(not vim.diagnostic.is_enabled()) end, "Diagnostics")
+leader("tm", function() require("render-markdown").toggle() end, "Markdown rendering")
 leader("th", function() vim.lsp.inlay_hint.enable(not vim.lsp.inlay_hint.is_enabled()) end, "Inlay hints")
 
 -- Help --------------------------------------------------------------------

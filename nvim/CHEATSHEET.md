@@ -222,6 +222,7 @@ finishes.
 | `SPC t z` | zen mode                 |
 | `SPC t w` | word wrap                |
 | `SPC t l` | relative line numbers    |
+| `SPC t m` | markdown rendering       |
 | `SPC h k` | search all keys          |
 | `SPC h h` | help pages               |
 | `SPC h n` | notification history     |
@@ -230,6 +231,7 @@ finishes.
 | `SPC q q` | save all and quit        |
 
 URLs are clickable (OSC 8): Ctrl+click, or Shift+Ctrl+click if a multiplexer captures the mouse.
+Markdown is rendered in place (the cursor line stays raw); Ctrl+click the text of a `[text](url)` link.
 
 ## iPad setup tips
 
