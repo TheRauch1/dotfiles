@@ -1,0 +1,12 @@
+CI #118 Add retry to widget sync
+Status    ✗ failure  feature/widget-retry  pull_request  30m  attempt 2
+URL       https://github.com/acme/widgets/actions/runs/4242
+RET log  TAB steps  R rerun failed  X cancel  o copy URL  gr refresh  q back  ? keys
+
+Jobs  ✓ 1  ✗ 1  - 1  
+  ✗ unit  4m12s
+      ✓ Checkout
+      ✗ Run tests
+      - Upload coverage
+  ✓ lint  45s
+  - docs  2s

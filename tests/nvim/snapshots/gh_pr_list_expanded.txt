@@ -1,0 +1,10 @@
+Pull requests  acme/widgets  [open]  3
+RET open  TAB checks  f filter  / search  d diff  c checkout  o copy URL  gr refresh  q back  ? keys
+
+#7     ✗ review   anna-müller  feature/widget-retry 20m  Add retry to widget sync
+         ✗ CI / unit         4m12s
+         ● CI / integration  5m00s
+         ✓ CI / lint         45s
+         - 1 skipped
+#5       draft    bob          gadget-cache         3d   WIP: rework gadget cache
+#3     ✓ approved carol        docs/typo            2mo  Fix typo in README

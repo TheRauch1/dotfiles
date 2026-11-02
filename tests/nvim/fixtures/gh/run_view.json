@@ -1,0 +1,10 @@
+{"databaseId": 4242, "number": 118, "displayTitle": "Add retry to widget sync", "workflowName": "CI", "headBranch": "feature/widget-retry",
+ "status": "completed", "conclusion": "failure", "event": "pull_request", "attempt": 2, "createdAt": "2026-11-02T11:30:00Z",
+ "url": "https://github.com/acme/widgets/actions/runs/4242",
+ "jobs": [
+  {"databaseId": 9002, "name": "lint", "status": "completed", "conclusion": "success", "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:30:45Z",
+   "steps": [{"name": "Checkout", "status": "completed", "conclusion": "success"}, {"name": "Run luacheck", "status": "completed", "conclusion": "success"}]},
+  {"databaseId": 9001, "name": "unit", "status": "completed", "conclusion": "failure", "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:34:12Z",
+   "steps": [{"name": "Checkout", "status": "completed", "conclusion": "success"}, {"name": "Run tests", "status": "completed", "conclusion": "failure"}, {"name": "Upload coverage", "status": "completed", "conclusion": "skipped"}]},
+  {"databaseId": 9004, "name": "docs", "status": "completed", "conclusion": "skipped", "startedAt": "2026-11-02T11:30:00Z", "completedAt": "2026-11-02T11:30:02Z", "steps": []}
+ ]}

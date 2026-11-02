@@ -1,0 +1,8 @@
+[
+ {"databaseId": 4242, "displayTitle": "Add retry to widget sync", "workflowName": "CI", "headBranch": "feature/widget-retry",
+  "status": "in_progress", "conclusion": "", "event": "pull_request", "createdAt": "2026-11-02T11:30:00Z", "updatedAt": "2026-11-02T11:56:00Z",
+  "url": "https://github.com/acme/widgets/actions/runs/4242"},
+ {"databaseId": 4100, "displayTitle": "Fix typo in README", "workflowName": "Docs", "headBranch": "main",
+  "status": "completed", "conclusion": "success", "event": "push", "createdAt": "2026-09-01T07:50:00Z", "updatedAt": "2026-09-01T07:53:00Z",
+  "url": "https://github.com/acme/widgets/actions/runs/4100"}
+]
