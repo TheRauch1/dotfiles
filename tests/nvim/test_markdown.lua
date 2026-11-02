@@ -27,7 +27,7 @@ end
 
 return {
   renders_markdown_buffer = function()
-    vim.g.have_nerd_font = false
+    T.eq(vim.g.have_nerd_font, false)
     local path = vim.fn.tempname() .. ".md"
     vim.fn.writefile(body, path)
     vim.cmd("edit " .. path)
@@ -45,6 +45,31 @@ return {
     vim.api.nvim_buf_set_lines(buf, 0, -1, false, body)
     show(buf)
     T.ok(#marks(buf) > 0, "nofile buffer not rendered")
+  end,
+
+  compose_raw_in_insert = function()
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.bo[buf].buftype = "nofile"
+    vim.api.nvim_buf_set_lines(buf, 0, -1, false, body)
+    show(buf)
+    T.ok(#marks(buf) > 0)
+    -- feedkeys never reaches insert mode headless: ask the plugin's per-buffer
+    -- config which modes it renders (it applies this on every mode change)
+    local resolved = require("render-markdown.state").get(buf).resolved
+    T.ok(resolved:render("n"), "normal mode is rendered")
+    T.ok(not resolved:render("i"), "insert mode must show raw text")
+  end,
+
+  toggle_outside_markdown_noop = function()
+    local buf = vim.api.nvim_create_buf(false, true)
+    vim.api.nvim_win_set_buf(0, buf)
+    vim.bo[buf].filetype = "text"
+    require("lazy").load({ plugins = { "render-markdown.nvim" } })
+    local before = require("render-markdown").get()
+    local notes = T.notifications()
+    vim.fn.maparg("<leader>tm", "n", false, true).callback()
+    T.eq(require("render-markdown").get(), before)
+    T.eq(notes[#notes].msg, "Markdown rendering: open a markdown buffer first")
   end,
 
   toggle_key = function()

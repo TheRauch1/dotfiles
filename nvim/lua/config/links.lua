@@ -20,6 +20,9 @@ function M.find(line)
   while true do
     local s, e = line:find("https?://[%w%-._~:/?#%[%]@!$&'()*+,;=%%]+", init)
     if not s then break end
+    -- Markdown `[url](url)`: the first url ends where `](` starts.
+    local close = line:sub(s, e):find("](", 1, true)
+    if close then e = s + close - 2 end
     -- Trim what is prose, not URL: end punctuation and unbalanced closers.
     while e > s do
       local c = line:sub(e, e)
@@ -41,7 +44,7 @@ function M.find(line)
     local s, e = line:find("%[[^%[%]]+%]%(", init)
     if not s then break end
     local m = by_start[e] -- 0-based start of the char after "("
-    if m then out[#out + 1] = { s = s, e = e - 2, url = m.url } end
+    if m and not by_start[s] then out[#out + 1] = { s = s, e = e - 2, url = m.url } end -- [url](url): text is already a url span
     init = e + 1
   end
   table.sort(out, function(a, b) return a.s < b.s end)
@@ -51,7 +54,7 @@ end
 local function linkable(buf)
   if vim.g.osc8_links == false then return false end
   local bt = vim.bo[buf].buftype
-  return bt == "" or bt == "help"
+  return bt == "" or bt == "help" or (bt == "nofile" and vim.bo[buf].filetype == "markdown")
 end
 
 function M.on_win(_, _, buf) return linkable(buf) end

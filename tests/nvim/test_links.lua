@@ -68,6 +68,24 @@ return {
     })
   end,
 
+  find_markdown_link_with_url_text = function()
+    local u = "https://a.test/x"
+    T.eq(links.find("[" .. u .. "](" .. u .. ")"), {
+      { s = 1, e = 17, url = u },
+      { s = 19, e = 35, url = u },
+    })
+  end,
+
+  provider_marks_nofile_markdown = function()
+    vim.g.osc8_links = nil
+    links.setup()
+    local buf = scratch({ "[docs](https://example.com/x)" })
+    vim.bo[buf].buftype = "nofile"
+    T.eq(provide(buf), {}, "plain nofile stays unmarked")
+    vim.bo[buf].filetype = "markdown"
+    T.eq(#provide(buf), 2)
+  end,
+
   provider_skips_long_lines_and_special_buffers = function()
     links.setup()
     vim.g.osc8_links = nil

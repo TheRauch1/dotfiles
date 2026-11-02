@@ -23,6 +23,12 @@ return {
   {
     "MeanderingProgrammer/render-markdown.nvim",
     ft = "markdown",
-    opts = function() return nerd and {} or plain() end,
+    opts = function()
+      local opts = nerd and {} or plain()
+      -- The plugin renders nofile buffers in every mode; editable ones (the
+      -- compose split) should show raw text in insert mode like the rest.
+      opts.overrides = { buftype = { nofile = { render_modes = { "n", "c", "t" }, sign = { enabled = false } } } }
+      return opts
+    end,
   },
 }
