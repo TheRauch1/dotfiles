@@ -19,6 +19,16 @@ function M.dirs()
   return out
 end
 
+-- Readable `<overlay>/<rel>` files, in overlay-name order.
+function M.files(rel)
+  local out = {}
+  for _, d in ipairs(M.dirs()) do
+    local f = d .. "/" .. rel
+    if vim.fn.filereadable(f) == 1 then out[#out + 1] = f end
+  end
+  return out
+end
+
 -- lazy.nvim resets the runtimepath, so call this after lazy.setup.
 function M.setup_rtp()
   for _, d in ipairs(M.dirs()) do
