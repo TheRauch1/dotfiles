@@ -18,11 +18,24 @@ end
 
 local function ok(rel) return { true, T.fixture(rel) } end
 
+-- Text and highlights: every extmark in the "gh" namespace as
+-- "<row>:<start_col>-<end_col> <hl_group>", sorted.
+local function snapshot(name, buf)
+  T.snapshot(name, T.lines(buf))
+  local ns = vim.api.nvim_get_namespaces()["gh"]
+  local hls = {}
+  for _, m in ipairs(vim.api.nvim_buf_get_extmarks(buf, ns, 0, -1, { details = true })) do
+    hls[#hls + 1] = ("%d:%d-%d %s"):format(m[2], m[3], m[4].end_col, m[4].hl_group)
+  end
+  table.sort(hls)
+  T.snapshot(name .. "_hl", hls)
+end
+
 return {
   pr_list_snapshot = function()
     local gh = setup({ ["pr list"] = ok("gh/pr_list.json") })
     local buf = gh.pr_list("open", REPO)
-    T.snapshot("gh_pr_list", T.lines(buf))
+    snapshot("gh_pr_list", buf)
   end,
 
   pr_list_tab_expands_checks = function()
@@ -35,36 +48,37 @@ return {
     T.ok(row, "failing PR row not found")
     vim.api.nvim_win_set_cursor(0, { row, 0 })
     vim.api.nvim_feedkeys(vim.keycode("<tab>"), "x", false)
-    T.snapshot("gh_pr_list_expanded", T.lines(buf))
+    snapshot("gh_pr_list_expanded", buf)
   end,
 
   pr_view_snapshot = function()
     local gh = setup({ ["pr view"] = ok("gh/pr_view.json") })
     local buf = gh.pr_view(7, REPO)
-    T.snapshot("gh_pr_view", T.lines(buf))
+    snapshot("gh_pr_view", buf)
   end,
 
   run_list_snapshot = function()
     local gh = setup({ ["run list"] = ok("gh/run_list.json") })
     local buf = gh.run_list(REPO)
-    T.snapshot("gh_run_list", T.lines(buf))
+    snapshot("gh_run_list", buf)
   end,
 
   run_view_snapshot = function()
     local gh = setup({ ["run view"] = ok("gh/run_view.json") })
     local buf = gh.run_view(4242, REPO)
-    T.snapshot("gh_run_view", T.lines(buf))
+    snapshot("gh_run_view", buf)
   end,
 
   diff_snapshot = function()
     local gh = setup({ ["pr diff"] = ok("gh/pr.diff") })
     gh.pr_diff(7, { repo = REPO })
-    T.snapshot("gh_diff", T.lines(vim.api.nvim_get_current_buf()))
+    snapshot("gh_diff", vim.api.nvim_get_current_buf())
   end,
 
   error_screen = function()
     local gh = setup({ ["pr list"] = { false, "", "HTTP 401: Bad credentials" } })
     local buf = gh.pr_list("open", REPO)
     T.eq(T.lines(buf)[1], "gh: HTTP 401: Bad credentials")
+    snapshot("gh_error", buf)
   end,
 }
