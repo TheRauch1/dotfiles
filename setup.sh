@@ -44,6 +44,14 @@ fi
 # (and land in Doom's env file below).
 export PATH="$HOME/.local/share/mise/shims:$PATH"
 
+# `dev` (doom/shell.zsh) needs tmux to survive dropped SSH connections.
+if ! command -v tmux >/dev/null; then
+  echo
+  echo "Note: tmux not found. \`dev\` works without it but won't survive a dropped connection:"
+  echo "  sudo apt install -y tmux    # Debian/Ubuntu"
+  echo "  brew install tmux           # macOS"
+fi
+
 # Doom Emacs is optional: without Emacs, stop here (Neovim is ready).
 if ! command -v emacs >/dev/null; then
   echo
