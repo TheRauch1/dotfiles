@@ -25,6 +25,8 @@ link "$DOT/doom"           "$HOME/.config/doom"
 link "$DOT/mise/config.toml" "$HOME/.config/mise/config.toml"
 link "$DOT/ghostty/config" "$HOME/.config/ghostty/config"
 link "$DOT/nvim" "$HOME/.config/nvim"
+link "$DOT/cockpit" "$HOME/.config/cockpit"
+link "$DOT/pi/extensions/cockpit.ts" "$HOME/.pi/agent/extensions/cockpit.ts"
 
 for rc in "$HOME/.zshrc" "$HOME/.bashrc"; do
   if ! grep -q 'doom/shell.zsh' "$rc" 2>/dev/null; then

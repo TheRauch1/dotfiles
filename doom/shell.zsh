@@ -19,6 +19,23 @@ pd() {
   emacsclient -t -a '' -e "(+live-diff \"$root/\")"
 }
 
+# dev [name]: your projects and their agents, in one Neovim that survives
+# SSH drops and laptop restarts. Reattaches if it's running (taking over
+# from another device), else starts Neovim and restores the projects you
+# had open (and resumes each agent with Alt+a). `name` keeps separate
+# setups apart (e.g. dev work, dev home); `dev ls` lists them.
+dev() {
+  local name=${1:-default} conf="$HOME/.config/cockpit/tmux.conf"
+  if [[ $name == ls ]]; then
+    tmux -L cockpit ls 2>/dev/null || echo "(none running)"
+    ls "${XDG_STATE_HOME:-$HOME/.local/state}/nvim/cockpit/" 2>/dev/null | sed -n 's/\.json$//p' | sed 's/^/saved: /'
+    return
+  fi
+  local nv="COCKPIT_NAME=$name nvim --cmd 'let g:cockpit_restore=1'"
+  if ! command -v tmux >/dev/null; then eval "$nv"; return; fi
+  TMUX= tmux -L cockpit -f "$conf" new-session -A -D -s "$name" "$nv"
+}
+
 export EDITOR="emacsclient -t -a ''"
 export VISUAL="$EDITOR"
 

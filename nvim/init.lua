@@ -61,5 +61,6 @@ require("config.overlays").setup_rtp()
 
 require("config.keymaps")
 require("config.sidebar") -- auto-shows the git panel on wide screens
+require("config.workspaces").setup() -- projects as tabs, saved and restored (dev)
 require("config.links").setup() -- OSC 8: Ctrl+click opens URLs in the terminal
 require("config.overlays").load() -- overlay modules, after everything they may extend

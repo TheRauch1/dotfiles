@@ -27,6 +27,7 @@ return {
         F7 = "F7", F8 = "F8", F9 = "F9", F10 = "F10", F11 = "F11", F12 = "F12",
       } },
       spec = {
+        { "<leader>a", group = "agent" },
         { "<leader>b", group = "buffer" },
         { "<leader>c", group = "code" },
         { "<leader>f", group = "file" },
@@ -65,7 +66,10 @@ return {
         lualine_b = { "branch", { "diff", symbols = { added = "+", modified = "~", removed = "-" } } },
         lualine_c = { { "filename", path = 1 },
           { "diagnostics", symbols = { error = "E", warn = "W", info = "I", hint = "H" } } },
-        lualine_x = { "lsp_status", "filetype" },
+        lualine_x = {
+          { function() return require("config.agent").statusline() end,
+            color = function() return require("config.agent").statusline_color() end },
+          "lsp_status", "filetype" },
         lualine_y = { "progress" },
         lualine_z = { "location" },
       },
