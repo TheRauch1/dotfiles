@@ -1,7 +1,7 @@
 # Neovim on iPad — Cheat Sheet
 
 Open anytime with `SPC ?`. Press `SPC` and wait: a menu shows every key.
-Same keys as the Doom setup (`../doom/CHEATSHEET.org`) wherever it made sense.
+Doom Emacs-style keys: `SPC` opens a menu of everything.
 
 ## Modes (vim)
 

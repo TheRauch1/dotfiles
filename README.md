@@ -1,8 +1,7 @@
 # dotfiles
 
-Neovim and Doom Emacs, set up alike, tuned for terminal use from an iPad
-(SSH/mosh into a Linux box) and for watching a coding agent
-([pi](https://pi.dev)) work. Tools come from [mise](https://mise.jdx.dev),
+Neovim, tuned for terminal use over SSH (a Linux box or VM, from a laptop
+or an iPad) and for working with a coding agent ([pi](https://pi.dev)). Tools come from [mise](https://mise.jdx.dev),
 so the same setup runs on Linux and macOS.
 
 ## Install
@@ -12,25 +11,22 @@ git clone https://github.com/TheRauch1/dotfiles ~/dev/dotfiles
 ~/dev/dotfiles/setup.sh
 ```
 
-That's all Neovim needs. For Doom Emacs as well, first install Emacs
-(`sudo apt install -y emacs build-essential`, or `brew install emacs-plus`
-on macOS).
-
-`setup.sh` symlinks the configs into place (backing up anything already
-there), hooks `doom/shell.zsh` into `~/.zshrc` and `~/.bashrc`, installs
-[mise](https://mise.jdx.dev) and the tools in `mise/config.toml` (gh, ripgrep,
-fd, language servers, ...), installs Doom Emacs if
-it's missing, and runs `doom sync`. Re-run it any time, e.g. after
-`git pull`.
+`setup.sh` is a plain bash script: it symlinks the configs into place
+(backing up anything already there), links the commands in `bin/` to
+`~/.local/bin`, adds one line to `~/.bashrc` / `~/.zshrc` that sources
+`shell/rc.sh` (PATH, `EDITOR=nvim`), and installs [mise](https://mise.jdx.dev)
+and the tools in `mise/config.toml` (gh, ripgrep, fd, lazygit, language
+servers, ...). Re-run it any time, e.g. after `git pull`.
 
 ## What's here
 
 | Path               | Linked to          | What                                     |
 |--------------------|--------------------|------------------------------------------|
-| `doom/`            | `~/.config/doom`   | Doom config, cheat sheet, shell helpers, GitHub UI (`gh.el`) |
-| `nvim/`            | `~/.config/nvim`   | Neovim config with the same keys and features ([cheat sheet](nvim/CHEATSHEET.md)) |
+| `nvim/`            | `~/.config/nvim`   | Neovim config ([cheat sheet](nvim/CHEATSHEET.md)) |
+| `bin/`             | `~/.local/bin/`    | `ide`, `dev`, `pd` |
+| `shell/rc.sh`      | `~/.config/dotfiles/rc.sh` | PATH, editor, terminal fallback; sourced by your shell |
 | `mise/config.toml` | `~/.config/mise/config.toml` | CLI tools and language servers |
-| `ghostty/config`   | `~/.config/ghostty/config`   | Option key works as Meta (M-d)  |
+| `ghostty/config`   | `~/.config/ghostty/config`   | Option key works as Alt; terminfo copied on ssh |
 | `cockpit/`         | `~/.config/cockpit`          | `dev` session, demo, Docker box ([below](#cockpit-one-ssh-session-all-projects-and-agents)) |
 | `pi/extensions/cockpit.ts` | `~/.pi/agent/extensions/` | Tells Neovim what pi is doing |
 
@@ -40,17 +36,10 @@ it's missing, and runs `doom sync`. Re-run it any time, e.g. after
 |-----------|--------------------------------------------------------------|
 | `dev`     | All projects + their agents in one Neovim that survives SSH drops and restarts (see Cockpit) |
 | `ide`     | The same with tmux in charge: a tab per project, agent pane on the right (see Cockpit) |
-| `e file`  | Open in the background Emacs (survives dropped connections)  |
-| `pd`      | In a git repo: live-updating diff (same as `SPC g d` in Emacs) |
-| `ekill`   | Stop the Emacs daemon                                        |
+| `pd`      | In a git repo: live-updating diff (same as `SPC g d` in Neovim) |
 
-Inside Emacs press `SPC` for a menu of everything, `SPC ?` for the
-[cheat sheet](doom/CHEATSHEET.org), and `jk` instead of Esc.
-
-`SPC g p` is GitHub through the `gh` CLI (`gh auth login` once): pull
-requests, reviews, merging, CI checks with their logs and reruns
-([doom/gh.el](doom/gh.el)). Magit status and the git panel show the
-current branch's PR and whether its checks pass.
+In Neovim press `SPC` for a menu of everything and `SPC ?` for the
+[cheat sheet](nvim/CHEATSHEET.md).
 
 In Neovim, URLs are real terminal links (OSC 8): Ctrl+click opens them,
 even when wrapped; Shift+Ctrl+click if a multiplexer captures the mouse.
@@ -193,7 +182,7 @@ is optional:
 | In the overlay                | Used by   | What happens |
 |-------------------------------|-----------|--------------|
 | `nvim/lua/overlay/<mod>.lua`  | Neovim    | `<overlay>/nvim` joins the runtimepath after lazy.nvim has started, then every `overlay/*.lua` is required (overlays and modules sorted by name) once the keymaps are set. A module that fails is reported with one error message and startup continues. |
-| `shell.sh`                    | bash, zsh | `doom/shell.zsh` sources every `dotfiles.d/*/shell.sh` at its end. |
+| `shell.sh`                    | bash, zsh | `shell/rc.sh` sources every `dotfiles.d/*/shell.sh` at its end. |
 | `mise.toml`                   | mise      | The overlay's `setup.sh` links it to `~/.config/mise/conf.d/<name>.toml` (native mise feature). |
 | `CHEATSHEET.md`               | Neovim    | Appended to `SPC ?` (cheat sheet). |
 | `setup.sh`                    | you       | Run by hand: links the overlay into `dotfiles.d`, installs, logs in. Safe to re-run. |
@@ -208,4 +197,4 @@ another directory of `test_*.lua` files, `TEST_FILTER` to pick tests).
 ## Language servers
 
 Optional; LSP features turn on per language when the server is on `PATH`.
-See the table at the end of the [cheat sheet](doom/CHEATSHEET.org).
+See the table at the end of the [cheat sheet](nvim/CHEATSHEET.md#language-servers).

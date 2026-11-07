@@ -1,5 +1,5 @@
 -- GitHub through the gh CLI: lua/config/gh.lua is the main UI (SPC g p),
--- mirroring doom/gh.el. octo.nvim is there for line-by-line review
+-- and octo.nvim is there for line-by-line review
 -- comments (SPC g p o, or O in a PR buffer).
 return {
   {

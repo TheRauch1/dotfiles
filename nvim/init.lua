@@ -1,4 +1,4 @@
--- Neovim config mirroring ../doom (Doom Emacs), for side-by-side comparison.
+-- Neovim config with Doom Emacs-style keys (SPC menu).
 -- Built for terminal use from an iPad (Blink over SSH, usually in tmux),
 -- Ghostty on macOS and Windows Terminal. Press SPC for a menu, SPC ? for
 -- the cheat sheet (CHEATSHEET.md next to this file).

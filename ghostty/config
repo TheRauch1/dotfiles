@@ -1,5 +1,5 @@
-# Ghostty: let Option act as Meta/Alt, so Emacs/Neovim see M-d (Option+d)
-# instead of a typed "∂". Linked to ~/.config/ghostty/config by setup.sh.
+# Ghostty: let Option act as Alt, so Neovim and tmux see Alt+a (Option+a)
+# instead of a typed "å". Linked to ~/.config/ghostty/config by setup.sh.
 macos-option-as-alt = true
 
 # On `ssh`, copy Ghostty's terminfo to the server (once) and fall back to

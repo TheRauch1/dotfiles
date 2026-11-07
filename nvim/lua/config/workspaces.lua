@@ -7,7 +7,7 @@
 --
 -- The layout is saved to stdpath("state")/cockpit/<name>.json whenever it
 -- changes and on exit: per project its directory, the file you were in,
--- the cursor, and whether it had an agent. `dev` (doom/shell.zsh) starts
+-- the cursor, and whether it had an agent. `dev` (bin/dev) starts
 -- Neovim with vim.g.cockpit_restore, so after a reboot every project comes
 -- back, and Alt+a resumes each agent's last conversation (pi -c).
 local M = {}

@@ -1,5 +1,5 @@
 -- GitHub pull requests, reviews and CI checks, driven by the gh CLI (uses
--- gh's login, nothing else to set up). A port of doom/gh.el: same buffers,
+-- gh's login, nothing else to set up). Modeled on Doom Emacs' GitHub UI: same buffers,
 -- same keys. SPC g p opens the menu; ? in any gh buffer lists its keys.
 --
 -- Every gh call is asynchronous, so a slow connection never freezes Neovim.
