@@ -84,6 +84,41 @@ local function git_changed(root)
   return files
 end
 
+---------------------------------------------------------------------------
+-- ide mode (cockpit/ide): tmux owns the agent, in the pane right of this
+-- Neovim. Sending context pastes into that pane instead of a drawer.
+---------------------------------------------------------------------------
+
+M.ide = vim.env.COCKPIT_IDE ~= nil and vim.env.TMUX ~= nil
+
+local function tmux(args)
+  local out = vim.fn.system(vim.list_extend({ "tmux" }, args))
+  return vim.v.shell_error == 0 and vim.trim(out) or nil
+end
+
+local function ide_pane()
+  local pane = tmux({ "show", "-wv", "-t", vim.env.TMUX_PANE or "", "@agent_pane" })
+  if not pane or pane == "" then
+    vim.notify("No agent pane in this window", vim.log.levels.WARN)
+    return nil
+  end
+  return pane
+end
+
+local function ide_state_file(root)
+  local dir = (vim.env.XDG_STATE_HOME or vim.fn.expand("~/.local/state")) .. "/cockpit-ide"
+  return ("%s/%s.json"):format(dir, (root:gsub("[^%w%-_.]", "%%")))
+end
+
+local function ide_paste(text, submit)
+  local pane = ide_pane()
+  if not pane then return end
+  tmux({ "set-buffer", "-b", "cockpit", text })
+  tmux({ "paste-buffer", "-p", "-d", "-b", "cockpit", "-t", pane })
+  if submit then tmux({ "send-keys", "-t", pane, "Enter" }) end
+  tmux({ "select-pane", "-t", pane })
+end
+
 --- "working" | "waiting" | "idle" | "exited" | "resume" (from a saved session)
 function M.state(a)
   if not a then return nil end
@@ -99,6 +134,10 @@ end
 --- Files the agent changed, as absolute paths.
 function M.files(a)
   a = a or M.get()
+  if M.ide and not (a and a.job) then
+    local root = M.root()
+    a = { root = root, state_file = ide_state_file(root), job = true }
+  end
   if not a then return {} end
   local ext = a.job and read_state_file(a)
   if ext and type(ext.files) == "table" then
@@ -316,6 +355,11 @@ function M.hide(root)
 end
 
 function M.toggle()
+  if M.ide then
+    local pane = ide_pane()
+    if pane then tmux({ "select-pane", "-t", pane }) end
+    return
+  end
   if vim.t.cockpit_watch then return M.watch_toggle() end
   for _, o in pairs(M.agents) do
     if visible(o) and not o.split and vim.api.nvim_get_current_win() == o.win then return M.hide(o.root) end
@@ -466,6 +510,7 @@ vim.api.nvim_create_autocmd("VimResized", {
 -- Paste text into the agent's input (bracketed paste: no Enter is sent, and
 -- multi-line text stays one message). Waits for a fresh agent to settle.
 function M.send(text, root)
+  if M.ide then return ide_paste(text) end
   local a = M.agents[root or M.root()]
   if not alive(a) then a = M.open(root, { insert = false }); M.hide(a.root) end
   -- Ready = the agent has drawn its UI and gone quiet. With pi's cockpit
@@ -561,7 +606,7 @@ end
 
 function M.jump(step)
   local a = M.get() or { root = M.root() }
-  local files = a.job and M.files(a) or git_changed(a.root)
+  local files = (a.job or M.ide) and M.files(a.job and a or nil) or git_changed(a.root)
   files = vim.tbl_filter(function(f) return vim.fn.filereadable(f) == 1 end, files)
   if #files == 0 then return vim.notify("The agent hasn't changed any files") end
   local cur = vim.api.nvim_buf_get_name(0)
@@ -577,7 +622,7 @@ end
 function M.quickfix()
   local a = M.get() or { root = M.root() }
   local items = {}
-  for _, f in ipairs(a.job and M.files(a) or git_changed(a.root)) do
+  for _, f in ipairs((a.job or M.ide) and M.files(a.job and a or nil) or git_changed(a.root)) do
     items[#items + 1] = { filename = f, lnum = 1, text = "changed by agent" }
   end
   vim.fn.setqflist({}, " ", { title = "Agent changes: " .. short(a.root), items = items })
@@ -593,6 +638,7 @@ function M.prompt()
   local root = M.root()
   vim.ui.input({ prompt = ("π %s: "):format(short(root)) }, function(text)
     if not text or text == "" then return end
+    if M.ide then return ide_paste(text, true) end
     local a = M.agents[root]
     if not alive(a) then
       if vim.t.cockpit_watch then M.watch(root, { insert = false }) else M.open(root, { insert = false }); M.hide(root) end

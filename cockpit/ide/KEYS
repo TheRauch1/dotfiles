@@ -1,0 +1,24 @@
+
+  ide keys  (prefix = Ctrl+b, press it, release, then the key)
+
+  Projects
+    prefix p / Alt+p    open a project from ~/dev (fuzzy search)
+    Alt+1..9            go to project 1..9 (or click its tab)
+    prefix w            jump to the next agent waiting for you
+    prefix X            close this project (not reopened next time)
+
+  Inside a project
+    Alt+a               hop between editor and agent
+    Alt+z               zoom the current pane (again: back)
+    prefix + / - / =    agent wider / narrower / back to 25%
+    prefix g / Alt+g    lazygit (q closes)
+    prefix t            a normal shell in a popup (exit closes)
+
+  Tabs:  ◐ agent working   ● your turn   ! needs approval
+
+  Session
+    prefix d            detach (everything keeps running)
+    ide                 reattach / after a reboot: reopen all projects
+                        and continue each agent's last conversation
+
+  (press any key)

@@ -323,6 +323,16 @@ return {
     reset()
   end,
 
+  ide_state_path_matches_shell_scripts = function()
+    -- cockpit/ide/lib.sh and agent.lua must name a project's state file alike.
+    local repo = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h:h")
+    local root = "/home/me/dev/my app+x"
+    local sh = vim.fn.system({ "bash", "-c", ". '" .. repo .. "/cockpit/ide/lib.sh'; state_file \"$1\"", "_", root })
+    local want = (vim.env.XDG_STATE_HOME or vim.fn.expand("~/.local/state")) .. "/cockpit-ide/"
+      .. root:gsub("[^%w%-_.]", "%%") .. ".json"
+    T.eq(sh, want)
+  end,
+
   workspaces_open_reuses_tabs = function()
     reset()
     local r1, r2 = project("api"), project("web")

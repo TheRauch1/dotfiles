@@ -36,6 +36,17 @@ dev() {
   TMUX= tmux -L cockpit -f "$conf" new-session -A -D -s "$name" "$nv"
 }
 
+# ide [name]: the other layout, with tmux in charge. One tab per project,
+# Neovim on the left, the agent on the right (25%), lazygit on prefix g.
+# Reattaches if running; after a reboot reopens every project and continues
+# each agent's conversation. Keys: Ctrl+b ? (cockpit/ide/KEYS).
+ide() {
+  local name=${1:-ide} home="$HOME/.config/cockpit/ide"
+  command -v tmux >/dev/null || { echo "ide needs tmux (sudo apt install tmux / brew install tmux)"; return 1; }
+  tmux -L ide has-session -t "=$name" 2>/dev/null || COLUMNS=$(tput cols) LINES=$(tput lines) "$home/start.sh" "$name"
+  TMUX= tmux -L ide -f "$home/tmux.conf" attach -d -t "=$name"
+}
+
 export EDITOR="emacsclient -t -a ''"
 export VISUAL="$EDITOR"
 

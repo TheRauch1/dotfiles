@@ -39,6 +39,7 @@ it's missing, and runs `doom sync`. Re-run it any time, e.g. after
 | Command   | Does                                                         |
 |-----------|--------------------------------------------------------------|
 | `dev`     | All projects + their agents in one Neovim that survives SSH drops and restarts (see Cockpit) |
+| `ide`     | The same with tmux in charge: a tab per project, agent pane on the right (see Cockpit) |
 | `e file`  | Open in the background Emacs (survives dropped connections)  |
 | `pd`      | In a git repo: live-updating diff (same as `SPC g d` in Emacs) |
 | `ekill`   | Stop the Emacs daemon                                        |
@@ -110,6 +111,39 @@ the models it lists, and makes it pi's default.
 SSHs into the VM and runs `dev` in one click, and frees the keys Neovim and
 pi need (Alt+Enter, Alt+arrows). Alt+a and Alt+z already reach the VM.
 
+### Or: `ide`, with tmux in charge
+
+The same idea laid out like VS Code, for when you want the agent always in
+view: tmux shows one tab per project (with the agent's ◐ / ● / ! in the
+tab), and each project tab is Neovim (code, file tree, git panel) with the
+agent in its own pane on the right, a quarter of the width. Agents run in
+tmux, not inside Neovim, so they keep going if Neovim is closed or crashes.
+Only the projects you open are active, so a big `~/dev` stays fast.
+
+```
+ide            # open (or reattach); after a reboot it reopens every project
+               # and continues each agent's last conversation
+```
+
+| Key | Does |
+|-----|------|
+| `Ctrl+b p` / `Alt+p` | open a project from `~/dev` (fuzzy search) |
+| `Alt+1..9`, click a tab | switch project |
+| `Alt+a` / `Alt+z` | editor ↔ agent / zoom a pane |
+| `Ctrl+b g` / `Alt+g` | lazygit in a popup |
+| `Ctrl+b t` | a normal shell in a popup |
+| `Ctrl+b w` | jump to the next agent waiting for you |
+| `Ctrl+b X` | close a project (not reopened next time) |
+| `Ctrl+b ?` | all keys ([cockpit/ide/KEYS](cockpit/ide/KEYS)) |
+
+In its Neovim, `SPC a s/e/h/i` paste into the agent pane next to it.
+The agent is pi by default; `IDE_AGENT=claude ide`, or `echo codex >
+.cockpit-agent` in a project, picks another. For their ◐ / ● / ! in the
+tabs, add [cockpit/hooks/claude-settings.json](cockpit/hooks/claude-settings.json)
+to `~/.claude/settings.json`, and for codex `notify = ["node",
+"~/.config/cockpit/hooks/agent-state.mjs", "waiting"]` to
+`~/.codex/config.toml` (codex only reports "done", so no ◐).
+
 ### Try it in Docker
 
 A throwaway "remote machine" with this repo installed, three small demo
@@ -118,7 +152,7 @@ projects and pi:
 ```bash
 docker compose -f cockpit/docker/compose.yml up -d --build
 ssh -p 2222 dev@localhost        # password: dev
-dev
+dev                              # or: ide
 ```
 
 pi uses `PI_BASE_URL` (default `http://spark.r4uch.xyz:8000/v1`) when the

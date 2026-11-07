@@ -60,6 +60,12 @@ end
 
 --- SPC p p: pick a project under ~/dev, open it as a workspace.
 function M.pick_project()
+  if require("config.agent").ide then
+    -- ide: projects are tmux tabs; the same picker as prefix p.
+    vim.fn.jobstart({ "tmux", "display-popup", "-E", "-w", "70%", "-h", "60%",
+      vim.fn.expand("~/.config/cockpit/ide/pick-project.sh") })
+    return
+  end
   Snacks.picker.projects({
     confirm = function(picker, item)
       picker:close()
@@ -183,7 +189,25 @@ function M.restore(data)
 end
 
 function M.setup()
-  M.setup_tabline()
+  if vim.env.COCKPIT_IDE then
+    -- ide: tmux shows the projects; this Neovim is one project with the
+    -- file tree and git panel open, like VS Code's side bar.
+    local sidebar = require("config.sidebar")
+    sidebar.min_columns = 0
+    vim.api.nvim_create_autocmd("VimEnter", {
+      group = vim.api.nvim_create_augroup("cockpit_ide", { clear = true }),
+      once = true,
+      callback = function()
+        vim.defer_fn(function()
+          pcall(sidebar.toggle_tree)
+          pcall(function() vim.cmd("wincmd p") end)
+          pcall(sidebar.show_git, vim.fn.getcwd())
+        end, 100)
+      end,
+    })
+  else
+    M.setup_tabline()
+  end
   local group = vim.api.nvim_create_augroup("cockpit_workspaces", { clear = true })
   vim.api.nvim_create_autocmd({ "TabNewEntered", "TabClosed", "TabEnter", "DirChanged", "BufEnter", "VimLeavePre" }, {
     group = group,

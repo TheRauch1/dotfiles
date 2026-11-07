@@ -86,7 +86,7 @@ return {
       },
       window = {
         position = "right",
-        width = 40,
+        width = vim.env.COCKPIT_IDE and 28 or 40, -- ide: narrower, the agent sits right of it
         mappings = {
           ["l"] = "open",
           ["h"] = "close_node",
@@ -132,7 +132,7 @@ return {
       animate = { enabled = false },
       exit_when_last = false,
       icons = { closed = "▸ ", open = "▾ " },
-      options = { right = { size = 40 } },
+      options = { right = { size = vim.env.COCKPIT_IDE and 28 or 40 } },
       wo = { winbar = true, winfixwidth = true, winfixheight = false, signcolumn = "no" },
       right = {
         {
