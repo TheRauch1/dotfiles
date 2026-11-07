@@ -3,6 +3,14 @@
 export PATH="$HOME/.config/emacs/bin:$HOME/.local/share/mise/shims:$HOME/.local/go/bin:$HOME/go/bin:$PATH"
 export COLORTERM=truecolor
 
+# A terminal the server doesn't know (e.g. Ghostty's xterm-ghostty over SSH)
+# breaks tmux, nvim and tput. Fall back to a common one; colors stay 24-bit
+# via COLORTERM. Better: install the terminfo once, from the client:
+#   infocmp -x xterm-ghostty | ssh host -- tic -x -
+if [ -n "$TERM" ] && command -v infocmp >/dev/null 2>&1 && ! infocmp "$TERM" >/dev/null 2>&1; then
+  export TERM=xterm-256color
+fi
+
 # Open in the running Emacs daemon (starts one if missing). Survives SSH drops.
 e() { emacsclient -t -a '' "${@:-.}"; }
 alias ekill="emacsclient -e '(kill-emacs)'"

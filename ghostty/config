@@ -1,3 +1,7 @@
 # Ghostty: let Option act as Meta/Alt, so Emacs/Neovim see M-d (Option+d)
 # instead of a typed "∂". Linked to ~/.config/ghostty/config by setup.sh.
 macos-option-as-alt = true
+
+# On `ssh`, copy Ghostty's terminfo to the server (once) and fall back to
+# xterm-256color where that isn't possible, so tmux/nvim work remotely.
+shell-integration-features = ssh-terminfo,ssh-env
