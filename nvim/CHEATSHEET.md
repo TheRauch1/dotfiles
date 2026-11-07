@@ -23,7 +23,7 @@ Same keys as the Doom setup (`../doom/CHEATSHEET.org`) wherever it made sense.
 | `SPC f f`   | find file below this file's folder       |
 | `SPC f r`   | recent files                             |
 | `SPC ,`     | switch buffer                            |
-| `SPC p p`   | switch project (`~/dev`)                 |
+| `SPC p p`   | open project (`~/dev`) in its own tab    |
 | `SPC /`     | search text in project                   |
 | `SPC *`     | search word under cursor in project      |
 | `SPC s s`   | search in this file                      |
@@ -117,6 +117,30 @@ Typst via tinymist. JS/TS/JSON/YAML only if prettier is installed.
 `M-` is Option on the iPad (Blink: Option as Meta) and in Ghostty
 (`macos-option-as-alt`). `C-d` works everywhere, Windows Terminal too.
 (It replaces vim's half-page-down; use `C-f` / `C-b` or the trackpad.)
+
+## Agent drawer (one pi per project)
+
+Start everything with `dev` in the shell: it restores your projects (one
+tab each) and survives SSH drops. Tab line: `●` agent waiting for you,
+`◐` working, `○` idle.
+
+| Key            | Does                                             |
+|----------------|--------------------------------------------------|
+| `Alt+a`        | show / hide this project's agent (also from inside it) |
+| `Alt+z`        | drawer: float ↔ fullscreen                       |
+| `SPC a s`      | send selection (with `path:lines`), no Enter     |
+| `SPC a f`      | send this file as `@path`                        |
+| `SPC a e`      | send this file's errors ("Fix these")            |
+| `SPC a h`      | send the git change under the cursor             |
+| `]a` / `[a`    | next / prev file the agent changed               |
+| `SPC a l`      | files the agent changed (quickfix)               |
+| `SPC a r`      | review: live diff of everything                  |
+| `SPC a a`      | all agents: jump to one                          |
+| `SPC a k` / `n`| restart agent (continue / fresh conversation)    |
+| `C-x`          | inside the drawer: leave typing mode (scroll, copy) |
+
+The status line shows the agent's state; you get a notification when it
+starts waiting (`vim.g.agent_autopeek = true` opens it instead).
 
 ## Windows & workspaces
 

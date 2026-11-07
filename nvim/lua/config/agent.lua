@@ -328,8 +328,13 @@ vim.api.nvim_create_autocmd("VimResized", {
 function M.send(text, root)
   local a = M.agents[root or M.root()]
   if not alive(a) then a = M.open(root, { insert = false }); M.hide(a.root) end
+  -- Ready = the agent has drawn its UI and gone quiet. With pi's cockpit
+  -- extension we also wait for its first state report (its TUI is up by
+  -- then); text sent earlier would land in the bare tty and echo as junk.
   local function ready()
-    return a.last_output and now() - a.last_output > 300 and now() - a.started > 500
+    if not a.last_output or now() - a.last_output < 300 then return false end
+    if read_state_file(a) then return true end
+    return now() - a.started > 2500
   end
   local function go()
     vim.fn.chansend(a.job, "\27[200~" .. text .. "\27[201~")

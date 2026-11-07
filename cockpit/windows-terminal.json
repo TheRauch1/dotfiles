@@ -1,0 +1,29 @@
+// Windows Terminal: merge into settings.json (Ctrl+, then "Open JSON file").
+// 1. A profile that opens the cockpit on the dev VM in one click. Replace
+//    "devvm" with the Host from your ~/.ssh/config (C:\Users\<you>\.ssh\config):
+//      Host devvm
+//        HostName 192.168.x.x        # the VM's address (VMware host-only / NAT)
+//        User <you>
+//        ServerAliveInterval 30      # notice a sleeping laptop, reconnect cleanly
+//    `dev` reattaches if it's running, else restores your projects.
+// 2. Unbind Windows Terminal keys that Neovim / pi want. These are global.
+{
+  "profiles": {
+    "list": [
+      {
+        "name": "Dev VM (cockpit)",
+        "commandline": "ssh -t devvm \"bash -ic dev\"",
+        "icon": "\ud83d\udee0",
+        "closeOnExit": "always",
+        "bellStyle": ["taskbar", "window"]
+      }
+    ]
+  },
+  "actions": [
+    { "command": "unbound", "keys": "alt+enter" },
+    { "command": "unbound", "keys": "alt+left" },
+    { "command": "unbound", "keys": "alt+right" },
+    { "command": "unbound", "keys": "alt+up" },
+    { "command": "unbound", "keys": "alt+down" }
+  ]
+}
