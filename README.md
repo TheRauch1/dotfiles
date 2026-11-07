@@ -27,7 +27,7 @@ servers, ...). Re-run it any time, e.g. after `git pull`.
 | `shell/rc.sh`      | `~/.config/dotfiles/rc.sh` | PATH, editor, terminal fallback; sourced by your shell |
 | `mise/config.toml` | `~/.config/mise/config.toml` | CLI tools and language servers |
 | `ghostty/config`   | `~/.config/ghostty/config`   | Option key works as Alt; terminfo copied on ssh |
-| `cockpit/`         | `~/.config/cockpit`          | `dev` session, demo, Docker box ([below](#cockpit-one-ssh-session-all-projects-and-agents)) |
+| `cockpit/`         | `~/.config/cockpit`          | `dev` and `ide` sessions, agent hooks ([below](#cockpit-one-ssh-session-all-projects-and-agents)) |
 | `pi/extensions/cockpit.ts` | `~/.pi/agent/extensions/` | Tells Neovim what pi is doing |
 
 ## Daily use
@@ -153,25 +153,6 @@ file tree shows each repo, the git panel follows the repo of the file
 you're in, and `Ctrl+b g` opens lazygit on that repo (from the agent pane
 it asks which one). Edit the `.cockpit` file and reopen the tab to change
 the list.
-
-### Try it in Docker
-
-A throwaway "remote machine" with this repo installed, three small demo
-projects and pi:
-
-```bash
-docker compose -f cockpit/docker/compose.yml up -d --build
-ssh -p 2222 dev@localhost        # password: dev
-dev                              # or: ide
-```
-
-pi uses `PI_BASE_URL` (default `http://spark.r4uch.xyz:8000/v1`) when the
-container can reach it, else a scripted demo model
-(`cockpit/demo/mock-llm.mjs`: no AI, it recognizes "app.py" and "index.js"
-and replays edits). `docker compose ... restart` re-checks the endpoint.
-Home is a volume, so `docker compose restart` behaves like a reboot: try
-`dev` afterwards. If the build hits GitHub's rate limit (mise downloads
-tools from GitHub), run it with `GITHUB_TOKEN=$(gh auth token)`.
 
 ## Overlays
 
