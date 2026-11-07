@@ -11,13 +11,13 @@ list=$(projects_file "$session")
 first=
 if [[ -f $list ]]; then
   while IFS= read -r dir; do
-    [[ -d $dir ]] || continue
+    [[ -e $dir ]] || continue
     "$IDE_HOME/open-project.sh" "$dir"
-    [[ -n $first ]] || first=$dir
+    [[ -n $first ]] || first=$(t list-windows -t "$session" -F '#{window_index}	#{@src}' | awk -F'\t' -v s="$dir" '$2 == s { print $1; exit }')
   done < "$list"
 fi
 if [[ -n $first ]]; then
-  t select-window -t "$(project_window "$first" "$session")"
+  t select-window -t "$session:$first"
 else
   # Nothing to restore: show the project picker as soon as you attach.
   t set-hook -t "$session" client-attached \

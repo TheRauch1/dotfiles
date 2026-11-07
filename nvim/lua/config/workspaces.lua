@@ -21,6 +21,23 @@ local function session_file()
 end
 M.session_file = session_file
 
+--- Git repo containing `path` (a file or folder), or nil. Works through the
+--- links of a workspace folder (~/ws/acme/api -> ~/dev/acme-api).
+function M.repo_of(path)
+  return vim.fs.root(path, ".git")
+end
+
+--- Repos linked in a workspace folder (subfolders with a .git), sorted.
+function M.workspace_repos(dir)
+  local out = {}
+  for name in vim.fs.dir(dir) do
+    local p = dir .. "/" .. name
+    if vim.fn.isdirectory(p) == 1 and vim.uv.fs_stat(p .. "/.git") then out[#out + 1] = p end
+  end
+  table.sort(out)
+  return out
+end
+
 local function tab_cwd(tabnr) return vim.fn.getcwd(-1, tabnr) end
 
 local function empty_tab(tab)
@@ -201,10 +218,26 @@ function M.setup()
         vim.defer_fn(function()
           pcall(sidebar.toggle_tree)
           pcall(function() vim.cmd("wincmd p") end)
-          pcall(sidebar.show_git, vim.fn.getcwd())
+          local git = M.repo_of(vim.fn.getcwd()) or M.workspace_repos(vim.fn.getcwd())[1]
+          if git then pcall(sidebar.show_git, git) end
         end, 100)
       end,
     })
+    -- Tell tmux which repo you're in, so prefix g opens lazygit there (in a
+    -- workspace of several repos, the one of the current file).
+    if vim.env.TMUX and vim.env.TMUX_PANE then
+      vim.api.nvim_create_autocmd({ "BufEnter", "DirChanged" }, {
+        group = vim.api.nvim_create_augroup("cockpit_ide_git", { clear = true }),
+        callback = function(ev)
+          local name = vim.api.nvim_buf_get_name(ev.buf)
+          local root = (vim.bo[ev.buf].buftype == "" and name ~= "" and M.repo_of(name)) or M.repo_of(vim.fn.getcwd())
+          if root == M._git_root then return end
+          M._git_root = root
+          vim.fn.jobstart({ "tmux", "set", "-p", "-t", vim.env.TMUX_PANE, root and "@git_root" or "-u",
+            root and root or "@git_root" })
+        end,
+      })
+    end
   else
     M.setup_tabline()
   end

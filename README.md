@@ -127,7 +127,7 @@ ide            # open (or reattach); after a reboot it reopens every project
 
 | Key | Does |
 |-----|------|
-| `Ctrl+b p` / `Alt+p` | open a project from `~/dev` (fuzzy search) |
+| `Ctrl+b p` / `Alt+p` | open a project (or `.cockpit` workspace) from `~/dev` |
 | `Alt+1..9`, click a tab | switch project |
 | `Alt+a` / `Alt+z` | editor ↔ agent / zoom a pane |
 | `Ctrl+b g` / `Alt+g` | lazygit in a popup |
@@ -143,6 +143,27 @@ tabs, add [cockpit/hooks/claude-settings.json](cockpit/hooks/claude-settings.jso
 to `~/.claude/settings.json`, and for codex `notify = ["node",
 "~/.config/cockpit/hooks/agent-state.mjs", "waiting"]` to
 `~/.codex/config.toml` (codex only reports "done", so no ◐).
+
+#### Projects that span several repos
+
+Like a VS Code multi-root workspace: list the repos in a `.cockpit` file
+anywhere under `~/dev`, and `Ctrl+b p` offers it next to the repos.
+
+```
+# ~/dev/acme.cockpit
+api      ~/dev/acme-api
+web      ~/dev/acme-web
+~/dev/shared-lib          # name defaults to the folder name
+agent    claude           # optional, default pi
+```
+
+It opens as one tab, `acme`, working in `~/ws/acme/` (a folder of links:
+`api/`, `web/`, `shared-lib/`). One agent sees and edits all the repos and
+is told they're separate repos (a generated `AGENTS.md`/`CLAUDE.md`). The
+file tree shows each repo, the git panel follows the repo of the file
+you're in, and `Ctrl+b g` opens lazygit on that repo (from the agent pane
+it asks which one). Edit the `.cockpit` file and reopen the tab to change
+the list.
 
 ### Try it in Docker
 

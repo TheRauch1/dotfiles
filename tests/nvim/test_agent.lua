@@ -394,4 +394,27 @@ return {
     ws.name = "default"
     reset()
   end,
+
+  ide_workspace_links_repos = function()
+    -- A .cockpit file becomes a folder of links, one per repo, plus a note
+    -- for the agent; repo_of finds each repo through its link.
+    local a, b = project("api"), project("web")
+    local tmp = vim.fn.tempname()
+    vim.fn.mkdir(tmp, "p")
+    write(tmp .. "/acme.cockpit", ("# test\napi %s\n%s   # name from folder\nagent claude\n"):format(a, b))
+    local repo = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":p:h:h:h")
+    local out = vim.system({ repo .. "/cockpit/ide/workspace.sh", tmp .. "/acme.cockpit" },
+      { env = { IDE_WORKSPACES = tmp .. "/ws" }, text = true }):wait()
+    T.eq(out.code, 0, out.stderr)
+    local ws_dir = vim.trim(out.stdout)
+    T.eq(ws_dir, tmp .. "/ws/acme")
+    T.eq(vim.uv.fs_realpath(ws_dir .. "/api"), vim.uv.fs_realpath(a))
+    T.eq(vim.uv.fs_realpath(ws_dir .. "/" .. vim.fs.basename(b)), vim.uv.fs_realpath(b))
+    T.eq(vim.trim(read(ws_dir .. "/.cockpit-agent")), "claude")
+    T.ok(read(ws_dir .. "/AGENTS.md"):find("separate git", 1, true))
+    T.eq(#ws.workspace_repos(ws_dir), 2)
+    T.eq(ws.repo_of(ws_dir .. "/api/main.py"), ws_dir .. "/api")
+    T.eq(ws.repo_of(ws_dir), nil)
+    vim.fn.delete(tmp, "rf")
+  end,
 }
