@@ -191,7 +191,7 @@ prompt): `:e!` takes the disk version, `:w` keeps yours.
 | `SPC g b` | switch branch: type to filter, RET checks out, C-a creates a new branch, C-x deletes |
 | `SPC g G` | lazygit                                       |
 | `SPC g d` | live diff (see above)                         |
-| `SPC g D` | side-by-side diff of all changes (Diffview)   |
+| `SPC g D` | side-by-side diff of all changes (`q` closes) |
 | `SPC g h` | history of this file, `SPC g H` of the repo   |
 | `SPC g l` | git log                                       |
 | `SPC g S` | changed files (picker)                        |

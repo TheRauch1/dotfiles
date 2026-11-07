@@ -28,6 +28,12 @@ return {
       enhanced_diff_hl = true,
       signs = { fold_closed = "▸", fold_open = "▾", done = "✓" },
       icons = { folder_closed = "▸", folder_open = "▾" },
+      -- q closes it again, from any of its windows (it opens in its own tab).
+      keymaps = {
+        view = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diff" } } },
+        file_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diff" } } },
+        file_history_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close history" } } },
+      },
     },
   },
 
