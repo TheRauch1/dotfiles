@@ -30,7 +30,7 @@ leader("<space>", util.project_files, "Find file in project")
 leader(".", function() require("oil").open_float(util.dir()) end, "Browse files here")
 leader(",", pick("buffers"), "Switch buffer")
 leader("/", util.grep, "Search in project")
-leader("*", function() Snacks.picker.grep_word({ cwd = util.root() }) end, "Search word in project", { "n", "x" })
+leader("*", util.grep_word, "Search word in project", { "n", "x" })
 
 leader("ff", function() Snacks.picker.files({ cwd = util.dir() }) end, "Find file here")
 leader("fr", pick("recent"), "Recent files")

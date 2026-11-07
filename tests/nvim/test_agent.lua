@@ -415,6 +415,16 @@ return {
     T.eq(#ws.workspace_repos(ws_dir), 2)
     T.eq(ws.repo_of(ws_dir .. "/api/main.py"), ws_dir .. "/api")
     T.eq(ws.repo_of(ws_dir), nil)
+    -- SPC SPC / SPC / search every repo of the workspace, through the links.
+    local util = require("config.util")
+    local old = vim.fn.getcwd()
+    vim.cmd("cd " .. vim.fn.fnameescape(ws_dir))
+    T.eq(util.workspace(), ws_dir)
+    T.eq(util.search_scope(), { cwd = ws_dir, follow = true, name = "workspace acme" })
+    vim.cmd("cd " .. vim.fn.fnameescape(a))
+    T.eq(util.workspace(), nil)
+    T.eq(util.search_scope().cwd, a)
+    vim.cmd("cd " .. vim.fn.fnameescape(old))
     vim.fn.delete(tmp, "rf")
   end,
 }

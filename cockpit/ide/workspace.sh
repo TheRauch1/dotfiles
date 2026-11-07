@@ -38,6 +38,9 @@ while IFS= read -r line || [[ -n $line ]]; do
   repos+=("$link -> ${path/#"$HOME"/\~}")
 done < "$file"
 
+# Marks the folder as a workspace: Neovim's SPC SPC / SPC / then search all repos.
+echo "$file" > "$ws/.cockpit-workspace"
+
 if [[ -n $agent ]]; then echo "$agent" > "$ws/.cockpit-agent"; else rm -f "$ws/.cockpit-agent"; fi
 
 # Tell the agent what this folder is (pi reads AGENTS.md, Claude CLAUDE.md).

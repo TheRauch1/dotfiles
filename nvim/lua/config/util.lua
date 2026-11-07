@@ -44,14 +44,36 @@ function M.dir()
   return vim.fs.dirname(name)
 end
 
+--- The ide workspace (a folder of links to several repos, made from a
+--- *.cockpit file) this Neovim works in, or nil.
+function M.workspace()
+  return vim.fs.root(vim.fn.getcwd(), ".cockpit-workspace")
+end
+
+--- Where SPC SPC / SPC / search: the whole workspace (every repo in it,
+--- through its links) or the current project.
+function M.search_scope()
+  local ws = M.workspace()
+  if ws then return { cwd = ws, follow = true, name = "workspace " .. vim.fs.basename(ws) } end
+  local root = M.root()
+  return { cwd = root, name = vim.fn.fnamemodify(root, ":~") }
+end
+
 -- No cached file lists: agents create files behind our back, and fd is
 -- fast enough to run on every SPC SPC (Doom: projectile-enable-caching nil).
 function M.project_files()
-  Snacks.picker.files({ cwd = M.root(), title = "Files in " .. vim.fn.fnamemodify(M.root(), ":~") })
+  local s = M.search_scope()
+  Snacks.picker.files({ cwd = s.cwd, follow = s.follow, title = "Files in " .. s.name })
+end
+
+function M.grep_word()
+  local s = M.search_scope()
+  Snacks.picker.grep_word({ cwd = s.cwd, follow = s.follow })
 end
 
 function M.grep()
-  Snacks.picker.grep({ cwd = M.root(), title = "Search " .. vim.fn.fnamemodify(M.root(), ":~") })
+  local s = M.search_scope()
+  Snacks.picker.grep({ cwd = s.cwd, follow = s.follow, title = "Search " .. s.name })
 end
 
 local function read_lines(path)
