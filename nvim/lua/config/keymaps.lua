@@ -30,7 +30,7 @@ leader("<space>", util.project_files, "Find file in project")
 leader(".", function() require("oil").open_float(util.dir()) end, "Browse files here")
 leader(",", pick("buffers"), "Switch buffer")
 leader("/", util.grep, "Search in project")
-leader("*", function() Snacks.picker.grep_word({ cwd = util.root() }) end, "Search word in project", { "n", "x" })
+leader("*", util.grep_word, "Search word in project", { "n", "x" })
 
 leader("ff", function() Snacks.picker.files({ cwd = util.dir() }) end, "Find file here")
 leader("fr", pick("recent"), "Recent files")
@@ -40,7 +40,7 @@ leader("fy", function() util.copy(vim.fn.expand("%:p")) end, "Copy file path")
 leader("fY", function() util.copy(vim.fn.expand("%:.")) end, "Copy relative file path")
 leader("fp", function() Snacks.picker.files({ cwd = vim.fn.stdpath("config") }) end, "Neovim config files")
 
-leader("pp", pick("projects"), "Switch project (~/dev)")
+leader("pp", function() require("config.workspaces").pick_project() end, "Open project (~/dev) as a workspace")
 leader("pf", util.project_files, "Find file in project")
 leader("ps", util.grep, "Search in project")
 
@@ -59,6 +59,27 @@ leader("bO", function() Snacks.bufdelete.other() end, "Kill other buffers")
 leader("bn", "<cmd>bnext<cr>", "Next buffer")
 leader("bp", "<cmd>bprevious<cr>", "Previous buffer")
 leader("br", "<cmd>e!<cr>", "Revert buffer from disk")
+
+-- Agent drawer (config/agent.lua): one pi per project, Alt+a slides it in/out
+local function agent(fn, ...)
+  local args = { ... }
+  return function() require("config.agent")[fn](unpack(args)) end
+end
+map({ "n", "i", "x", "t" }, "<M-a>", agent("toggle"), "Agent drawer (show / hide)")
+leader("aa", agent("pick"), "All agents (jump to one)")
+leader("aw", agent("watch_toggle_layout"), "Watch layout: agent beside the live diff")
+leader("ai", agent("prompt"), "Prompt the agent (without leaving here)")
+leader("ap", agent("pick_session"), "Reopen an earlier conversation")
+leader("as", agent("send_selection"), "Send selection to agent", "x")
+leader("af", agent("send_file"), "Send this file (@path) to agent")
+leader("ae", agent("send_diagnostics"), "Send this file's errors to agent")
+leader("ah", agent("send_hunk"), "Send git change under cursor to agent")
+leader("ar", function() require("config.livediff").open(util.root()) end, "Review: live diff of all changes")
+leader("al", agent("quickfix"), "Files the agent changed (quickfix)")
+leader("ak", agent("restart"), "Restart agent (continue last session)")
+leader("an", agent("restart", true), "Restart agent with a fresh session")
+map("n", "]a", agent("jump", 1), "Next file the agent changed")
+map("n", "[a", agent("jump", -1), "Previous file the agent changed")
 
 -- Code --------------------------------------------------------------------
 leader("cf", function() require("conform").format({ lsp_format = "fallback" }) end, "Format buffer", { "n", "x" })
@@ -133,7 +154,8 @@ leader("<tab><tab>", function()
     local win = vim.api.nvim_tabpage_get_win(tab)
     local name = vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(win))
     local cwd = vim.fn.getcwd(-1, i)
-    table.insert(items, { i = i, text = ("%d  %s  %s"):format(i, vim.fn.fnamemodify(cwd, ":~"), vim.fn.fnamemodify(name, ":t")) })
+    local mark = require("config.agent").mark(cwd)
+    table.insert(items, { i = i, text = ("%d %s %s  %s"):format(i, mark ~= "" and mark or " ", vim.fn.fnamemodify(cwd, ":~"), vim.fn.fnamemodify(name, ":t")) })
   end
   vim.ui.select(items, { prompt = "Workspace", format_item = function(it) return it.text end },
     function(it) if it then vim.cmd("tabnext " .. it.i) end end)

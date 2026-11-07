@@ -1,4 +1,4 @@
--- Neovim config mirroring ../doom (Doom Emacs), for side-by-side comparison.
+-- Neovim config with Doom Emacs-style keys (SPC menu).
 -- Built for terminal use from an iPad (Blink over SSH, usually in tmux),
 -- Ghostty on macOS and Windows Terminal. Press SPC for a menu, SPC ? for
 -- the cheat sheet (CHEATSHEET.md next to this file).
@@ -61,5 +61,6 @@ require("config.overlays").setup_rtp()
 
 require("config.keymaps")
 require("config.sidebar") -- auto-shows the git panel on wide screens
+require("config.workspaces").setup() -- projects as tabs, saved and restored (dev)
 require("config.links").setup() -- OSC 8: Ctrl+click opens URLs in the terminal
 require("config.overlays").load() -- overlay modules, after everything they may extend

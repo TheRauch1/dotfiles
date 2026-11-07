@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# ide [name]: tmux in charge. One tab per project (or *.cockpit workspace),
+# Neovim on the left, the agent on the right (25%), lazygit on prefix g.
+# Reattaches if running; after a reboot reopens every project and continues
+# each agent's conversation. Keys: Ctrl+b ? (cockpit/ide/KEYS).
+name=${1:-ide}
+home="$HOME/.config/cockpit/ide"
+command -v tmux >/dev/null || { echo "ide needs tmux (sudo apt install tmux / brew install tmux)"; exit 1; }
+tmux -L ide has-session -t "=$name" 2>/dev/null || COLUMNS=$(tput cols) LINES=$(tput lines) "$home/start.sh" "$name"
+TMUX= exec tmux -L ide -f "$home/tmux.conf" attach -d -t "=$name"

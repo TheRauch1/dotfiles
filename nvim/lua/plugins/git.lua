@@ -28,6 +28,12 @@ return {
       enhanced_diff_hl = true,
       signs = { fold_closed = "▸", fold_open = "▾", done = "✓" },
       icons = { folder_closed = "▸", folder_open = "▾" },
+      -- q closes it again, from any of its windows (it opens in its own tab).
+      keymaps = {
+        view = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diff" } } },
+        file_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close diff" } } },
+        file_history_panel = { { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close history" } } },
+      },
     },
   },
 
@@ -86,7 +92,7 @@ return {
       },
       window = {
         position = "right",
-        width = 40,
+        width = vim.env.COCKPIT_IDE and 28 or 40, -- ide: narrower, the agent sits right of it
         mappings = {
           ["l"] = "open",
           ["h"] = "close_node",
@@ -132,7 +138,7 @@ return {
       animate = { enabled = false },
       exit_when_last = false,
       icons = { closed = "▸ ", open = "▾ " },
-      options = { right = { size = 40 } },
+      options = { right = { size = vim.env.COCKPIT_IDE and 28 or 40 } },
       wo = { winbar = true, winfixwidth = true, winfixheight = false, signcolumn = "no" },
       right = {
         {

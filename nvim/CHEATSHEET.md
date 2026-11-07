@@ -1,7 +1,7 @@
 # Neovim on iPad — Cheat Sheet
 
 Open anytime with `SPC ?`. Press `SPC` and wait: a menu shows every key.
-Same keys as the Doom setup (`../doom/CHEATSHEET.org`) wherever it made sense.
+Doom Emacs-style keys: `SPC` opens a menu of everything.
 
 ## Modes (vim)
 
@@ -23,7 +23,7 @@ Same keys as the Doom setup (`../doom/CHEATSHEET.org`) wherever it made sense.
 | `SPC f f`   | find file below this file's folder       |
 | `SPC f r`   | recent files                             |
 | `SPC ,`     | switch buffer                            |
-| `SPC p p`   | switch project (`~/dev`)                 |
+| `SPC p p`   | open project (`~/dev`) in its own tab    |
 | `SPC /`     | search text in project                   |
 | `SPC *`     | search word under cursor in project      |
 | `SPC s s`   | search in this file                      |
@@ -118,6 +118,35 @@ Typst via tinymist. JS/TS/JSON/YAML only if prettier is installed.
 (`macos-option-as-alt`). `C-d` works everywhere, Windows Terminal too.
 (It replaces vim's half-page-down; use `C-f` / `C-b` or the trackpad.)
 
+## Agent drawer (one pi per project)
+
+Start everything with `dev` in the shell: it restores your projects (one
+tab each, with their layout and conversation) and survives SSH drops.
+`SPC p p` opens a project in the watch layout: agent left, live diff
+right (under 120 columns one at a time). Tab line: `●` agent waiting for
+you, `◐` working, `○` idle.
+
+| Key            | Does                                             |
+|----------------|--------------------------------------------------|
+| `Alt+a`        | agent ↔ live diff (watch layout), or show / hide the drawer |
+| `Alt+z`        | agent full width ↔ back                          |
+| `SPC a w`      | watch layout on / off (agent beside the live diff) |
+| `SPC a i`      | type a prompt from anywhere, Enter sends it      |
+| `SPC a p`      | reopen an earlier conversation of this project   |
+| `SPC a s`      | send selection (with `path:lines`), no Enter     |
+| `SPC a f`      | send this file as `@path`                        |
+| `SPC a e`      | send this file's errors ("Fix these")            |
+| `SPC a h`      | send the git change under the cursor             |
+| `]a` / `[a`    | next / prev file the agent changed               |
+| `SPC a l`      | files the agent changed (quickfix)               |
+| `SPC a r`      | review: live diff of everything                  |
+| `SPC a a`      | all agents: jump to one                          |
+| `SPC a k` / `n`| restart agent (continue / fresh conversation)    |
+| `C-x`          | inside the drawer: leave typing mode (scroll, copy) |
+
+The status line shows the agent's state; you get a notification when it
+starts waiting (`vim.g.agent_autopeek = true` opens it instead).
+
 ## Windows & workspaces
 
 | Key                   | Does                     |
@@ -162,7 +191,7 @@ prompt): `:e!` takes the disk version, `:w` keeps yours.
 | `SPC g b` | switch branch: type to filter, RET checks out, C-a creates a new branch, C-x deletes |
 | `SPC g G` | lazygit                                       |
 | `SPC g d` | live diff (see above)                         |
-| `SPC g D` | side-by-side diff of all changes (Diffview)   |
+| `SPC g D` | side-by-side diff of all changes (`q` closes) |
 | `SPC g h` | history of this file, `SPC g H` of the repo   |
 | `SPC g l` | git log                                       |
 | `SPC g S` | changed files (picker)                        |

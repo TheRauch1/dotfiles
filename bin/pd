@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# pd [dir]: live diff of the repo in this terminal (Neovim, same as SPC g d).
+# It refreshes itself as files change, e.g. while an agent works next door.
+root=$(git -C "${1:-$PWD}" rev-parse --show-toplevel 2>/dev/null) \
+  || { echo "pd: not inside a git repo"; exit 1; }
+cd "$root" && exec nvim +"lua require('config.livediff').open(vim.fn.getcwd())"

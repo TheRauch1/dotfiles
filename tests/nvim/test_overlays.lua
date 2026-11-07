@@ -75,7 +75,7 @@ return {
     local root = new_root()
     local home = vim.fn.tempname()
     vim.fn.mkdir(home, "p")
-    local cmd = ("DOTFILES_D=%s HOME=%s . %s/doom/shell.zsh; echo $OVL")
+    local cmd = ("DOTFILES_D=%s HOME=%s . %s/shell/rc.sh; echo $OVL")
       :format(vim.fn.shellescape(root), vim.fn.shellescape(home), vim.fn.shellescape(repo))
     local function run()
       return vim.system({ "bash", "-c", cmd }, { text = true }):wait()

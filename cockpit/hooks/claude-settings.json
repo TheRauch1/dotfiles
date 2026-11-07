@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "node ~/.config/cockpit/hooks/agent-state.mjs working" }] }],
+    "Stop":             [{ "hooks": [{ "type": "command", "command": "node ~/.config/cockpit/hooks/agent-state.mjs waiting" }] }],
+    "Notification":     [{ "hooks": [{ "type": "command", "command": "node ~/.config/cockpit/hooks/agent-state.mjs blocked" }] }],
+    "PostToolUse":      [{ "matcher": "Edit|Write|MultiEdit",
+                           "hooks": [{ "type": "command", "command": "node ~/.config/cockpit/hooks/agent-state.mjs file" }] }]
+  }
+}
