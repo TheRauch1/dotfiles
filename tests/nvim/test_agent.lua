@@ -29,7 +29,7 @@ local function project(name)
   write(root .. "/main.py", "def add(a, b):\n    return a + b\n\nprint(add(1, 2))\n")
   write(root .. "/util.py", "X = 1\n")
   vim.fn.system({ "git", "-C", root, "init", "-q" })
-  write(root .. "/fake-agent.sh", "#!/bin/sh\nprintf 'fake agent ready> '\nstty raw -echo\nexec cat > \"$PWD/.received\"\n")
+  write(root .. "/fake-agent.sh", "#!/bin/sh\necho \"$@\" > \"$PWD/.args\"\nprintf 'fake agent ready> '\nstty raw -echo\nexec cat > \"$PWD/.received\"\n")
   vim.fn.setfperm(root .. "/fake-agent.sh", "rwxr-xr-x")
   vim.g.agent_cmd = { root .. "/fake-agent.sh" }
   vim.g.agent_resume_args = {}
@@ -44,6 +44,8 @@ local function reset()
   end
   agent.agents = {}
   vim.g.agent_autopeek = nil
+  vim.g.cockpit_layout = "code"
+  vim.t.cockpit_watch = nil
   vim.cmd("silent! tabonly")
   vim.cmd("silent! only")
   vim.o.columns = 200
@@ -214,6 +216,110 @@ return {
     agent.jump(1)
     -- untracked files count as changed: fake-agent.sh, main.py, util.py
     T.ok(vim.api.nvim_buf_get_name(0):match("^" .. vim.pesc(root)), vim.api.nvim_buf_get_name(0))
+    reset()
+  end,
+
+  watch_layout_puts_agent_beside_diff = function()
+    reset()
+    local root = project()
+    edit(root, "main.py")
+    local a = agent.watch()
+    local wins = vim.api.nvim_tabpage_list_wins(0)
+    T.eq(#wins, 2, "agent + diff")
+    T.eq(a.split, true)
+    T.eq(vim.api.nvim_get_current_buf(), a.buf)
+    T.ok(not floating(a.win), "a real split, not a float")
+    local other = wins[1] == a.win and wins[2] or wins[1]
+    T.ok(vim.api.nvim_buf_get_name(vim.api.nvim_win_get_buf(other)):match("^livediff://"), "diff on the other side")
+    -- Alt+a hops between them
+    agent.toggle()
+    T.eq(vim.api.nvim_get_current_win(), other)
+    agent.toggle()
+    T.eq(vim.api.nvim_get_current_win(), a.win)
+    -- leaving the layout keeps the agent running
+    agent.unwatch()
+    T.eq(#vim.api.nvim_tabpage_list_wins(0), 1)
+    T.eq(vim.fn.jobwait({ a.job }, 0)[1], -1)
+    reset()
+  end,
+
+  watch_layout_narrow_flips_one_window = function()
+    reset()
+    local root = project()
+    edit(root, "main.py")
+    vim.o.columns = 100
+    local a = agent.watch()
+    T.eq(#vim.api.nvim_tabpage_list_wins(0), 1)
+    T.eq(vim.api.nvim_get_current_buf(), a.buf)
+    agent.toggle()
+    T.ok(vim.api.nvim_buf_get_name(0):match("^livediff://"), vim.api.nvim_buf_get_name(0))
+    agent.toggle()
+    T.eq(vim.api.nvim_get_current_buf(), a.buf)
+    reset()
+  end,
+
+  new_project_opens_in_watch_layout = function()
+    reset()
+    local root = project("vibes")
+    vim.g.cockpit_layout = nil
+    vim.cmd("enew")
+    ws.open(root)
+    T.eq(vim.t.cockpit_watch, root)
+    T.ok(agent.agents[root] and agent.agents[root].split, "agent beside the diff")
+    T.eq(vim.o.showtabline, 2)
+    reset()
+  end,
+
+  prompt_sends_and_submits = function()
+    reset()
+    local root = project()
+    edit(root, "main.py")
+    local input = vim.ui.input
+    vim.ui.input = function(_, cb) cb("add a CLI flag") end
+    agent.prompt()
+    vim.ui.input = input
+    T.ok(T.wait(function() return read(root .. "/.received") == "\27[200~add a CLI flag\27[201~\r" end, 5000),
+      vim.inspect(read(root .. "/.received")))
+    reset()
+  end,
+
+  sessions_lists_pi_conversations = function()
+    reset()
+    local root = project()
+    local dir = vim.fn.tempname()
+    vim.env.PI_CODING_AGENT_DIR = dir
+    local sdir = ("%s/sessions/--%s--"):format(dir, (root:gsub("^/", ""):gsub("/", "-")))
+    local function msg(text) return vim.json.encode({ type = "message", message = { role = "user", content = { { type = "text", text = text } } } }) end
+    write(sdir .. "/old.jsonl", table.concat({ vim.json.encode({ type = "session" }), msg("first idea") }, "\n") .. "\n")
+    write(sdir .. "/new.jsonl", table.concat({ vim.json.encode({ type = "session" }),
+      msg("main.py:1-2\n```python\nx\n```\nwhy is this slow?"), msg("thanks"),
+      vim.json.encode({ type = "session_info", name = "Speed up add" }) }, "\n") .. "\n")
+    vim.uv.fs_utime(sdir .. "/old.jsonl", 1000, 1000)
+    local list = agent.sessions(root)
+    vim.env.PI_CODING_AGENT_DIR = nil
+    T.eq(#list, 2)
+    T.eq(list[1].path, sdir .. "/new.jsonl")
+    T.eq(list[1].title, "why is this slow?")
+    T.eq(list[1].name, "Speed up add")
+    T.eq(list[1].messages, 2)
+    T.eq(list[2].title, "first idea")
+    reset()
+  end,
+
+  restore_brings_back_watch_layout_and_session = function()
+    reset()
+    local root = project("api")
+    local session = root .. "/s.jsonl"
+    write(session, "")
+    ws.restore({ current = 1, tabs = { { cwd = root, agent = true, session = session, layout = "watch" } } })
+    local a = agent.agents[root]
+    T.ok(a and a.job, "agent started for the watch tab")
+    T.eq(vim.t.cockpit_watch, root)
+    T.eq(#vim.api.nvim_tabpage_list_wins(0), 2)
+    T.ok(T.wait(function() return read(root .. "/.args") ~= nil end), "agent started")
+    T.eq(read(root .. "/.args"), "--session " .. session .. "\n")
+    local snap = ws.snapshot()
+    T.eq(snap.tabs[1].layout, "watch")
     reset()
   end,
 

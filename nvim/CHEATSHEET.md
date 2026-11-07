@@ -121,13 +121,18 @@ Typst via tinymist. JS/TS/JSON/YAML only if prettier is installed.
 ## Agent drawer (one pi per project)
 
 Start everything with `dev` in the shell: it restores your projects (one
-tab each) and survives SSH drops. Tab line: `●` agent waiting for you,
-`◐` working, `○` idle.
+tab each, with their layout and conversation) and survives SSH drops.
+`SPC p p` opens a project in the watch layout: agent left, live diff
+right (under 120 columns one at a time). Tab line: `●` agent waiting for
+you, `◐` working, `○` idle.
 
 | Key            | Does                                             |
 |----------------|--------------------------------------------------|
-| `Alt+a`        | show / hide this project's agent (also from inside it) |
-| `Alt+z`        | drawer: float ↔ fullscreen                       |
+| `Alt+a`        | agent ↔ live diff (watch layout), or show / hide the drawer |
+| `Alt+z`        | agent full width ↔ back                          |
+| `SPC a w`      | watch layout on / off (agent beside the live diff) |
+| `SPC a i`      | type a prompt from anywhere, Enter sends it      |
+| `SPC a p`      | reopen an earlier conversation of this project   |
 | `SPC a s`      | send selection (with `path:lines`), no Enter     |
 | `SPC a f`      | send this file as `@path`                        |
 | `SPC a e`      | send this file's errors ("Fix these")            |

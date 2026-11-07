@@ -34,7 +34,9 @@ local function empty_tab(tab)
 end
 
 --- Go to the workspace of `dir`, creating it (a new tab, :tcd dir) if needed.
---- opts.files = false skips the file picker in a new workspace.
+--- A new workspace starts in the watch layout (agent beside the live diff;
+--- vim.g.cockpit_layout = "code" opens the file picker instead).
+--- opts.files = false skips the file picker, opts.layout overrides.
 function M.open(dir, opts)
   opts = opts or {}
   dir = vim.fs.normalize(vim.fn.fnamemodify(dir, ":p")):gsub("/$", "")
@@ -46,7 +48,10 @@ function M.open(dir, opts)
   end
   if not empty_tab(0) then vim.cmd("tabnew") end
   vim.cmd("tcd " .. vim.fn.fnameescape(dir))
-  if opts.files ~= false then
+  local layout = opts.layout or vim.g.cockpit_layout or "watch"
+  if layout == "watch" and vim.fs.root(dir, ".git") then
+    require("config.agent").watch(dir)
+  elseif opts.files ~= false then
     pcall(function() Snacks.picker.files({ cwd = dir, title = "Files in " .. vim.fn.fnamemodify(dir, ":~") }) end)
   end
   M.save()
@@ -82,7 +87,7 @@ end
 
 function M.setup_tabline()
   vim.o.tabline = "%!v:lua.require'config.workspaces'.tabline()"
-  vim.o.showtabline = 1 -- only with 2+ projects open
+  vim.o.showtabline = 2 -- always: it's the project switcher
 end
 
 ---------------------------------------------------------------------------
@@ -109,7 +114,10 @@ function M.snapshot()
   for i, tab in ipairs(vim.api.nvim_list_tabpages()) do
     local cwd = tab_cwd(i)
     local f = main_file(tab)
-    tabs[#tabs + 1] = { cwd = cwd, file = f and f.file, cursor = f and f.cursor, agent = agents[cwd] or nil }
+    local ag = agents[cwd]
+    local layout = vim.t[tab].cockpit_watch and "watch" or nil
+    tabs[#tabs + 1] = { cwd = cwd, file = f and f.file, cursor = f and f.cursor,
+      agent = ag and true or nil, session = type(ag) == "string" and ag or nil, layout = layout }
     if tab == vim.api.nvim_get_current_tabpage() then current = i end
   end
   return { version = 1, current = current, tabs = tabs }
@@ -140,6 +148,7 @@ function M.restore(data)
   restoring = true
   local agent = require("config.agent")
   local first = true
+  local watch = {}
   for _, t in ipairs(data.tabs) do
     if type(t.cwd) == "string" and vim.fn.isdirectory(t.cwd) == 1 then
       if not first then vim.cmd("tabnew") end
@@ -152,12 +161,24 @@ function M.restore(data)
           vim.cmd("normal! zz")
         end
       end
-      if t.agent then agent.mark_resume(t.cwd) end
+      if t.agent then agent.mark_resume(t.cwd, t.session) end
+      if t.layout == "watch" then
+        watch[#watch + 1] = vim.api.nvim_get_current_tabpage()
+        vim.t.cockpit_watch = t.cwd
+      end
     end
   end
   local n = vim.fn.tabpagenr("$")
   vim.cmd("tabnext " .. math.min(math.max(tonumber(data.current) or 1, 1), n))
   restoring = false
+  -- Watch tabs come back with their agent beside the live diff.
+  local cur = vim.api.nvim_get_current_tabpage()
+  for _, tab in ipairs(watch) do
+    vim.api.nvim_set_current_tabpage(tab)
+    agent.watch(vim.t.cockpit_watch, { insert = false })
+  end
+  vim.api.nvim_set_current_tabpage(cur)
+  vim.cmd.stopinsert()
   return not first
 end
 

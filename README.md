@@ -60,12 +60,19 @@ the text of `[text](url)` links is clickable too.
 ## Cockpit: one SSH session, all projects and agents
 
 Built for a small laptop screen and nothing but an SSH session into the
-dev machine. No splits: Neovim gets the whole width, and the coding agent
-(pi) is a drawer that slides over the code with `Alt+a` and away again
-with the same key, still working. Every project is a tab with its own
-agent; the tab line and status line show which agent is working (`◐`) or
-waiting for you (`●`), and you get a notification when one is done. So you
-only switch when there is something to see.
+dev machine. Every project is a tab with its own agent (pi); the tab line
+shows which agent is working (`◐`) or waiting for you (`●`), and you get a
+notification when one is done.
+
+Two ways to work, per tab:
+
+- **Watch layout** (default for `SPC p p`): the agent on the left, the live
+  diff on the right, refreshing as the agent edits. For prompting and
+  watching. `Alt+a` hops between the two (under 120 columns they share
+  the screen and `Alt+a` flips).
+- **Code + drawer** (`SPC a w` toggles): Neovim gets the whole width; the
+  agent is a drawer that slides over the code with `Alt+a` and away again,
+  still working.
 
 ```
 dev            # open (or reattach to) the cockpit
@@ -74,6 +81,9 @@ dev work       # a separate one, e.g. per machine or client; `dev ls` lists them
 
 - **Projects:** `SPC p p` opens a project from `~/dev` in its own tab,
   `SPC TAB 1..9` switches.
+- **Conversations:** `SPC a p` lists this project's earlier pi
+  conversations (newest first, with their first prompt) and reopens one;
+  `SPC a n` starts a fresh one; `SPC a i` sends a prompt from anywhere.
 - **Talk to the agent from the code:** select lines and `SPC a s` pastes
   them with `path:lines` into the agent (no Enter, so you add the
   question). `SPC a e` sends the file's errors, `SPC a h` the git change.
@@ -82,8 +92,9 @@ dev work       # a separate one, e.g. per machine or client; `dev ls` lists them
 - **Coming back:** `dev` runs Neovim inside a hidden tmux (own socket and
   config, `cockpit/tmux.conf`), so a dropped SSH connection or a closed
   laptop costs nothing: SSH in, `dev`, you're back mid-sentence. After the
-  machine itself restarts, `dev` reopens every project at the file and line
-  you left, and `Alt+a` resumes each agent's last conversation (`pi -c`).
+  machine itself restarts, `dev` reopens every project with its layout and
+  the file and line you left, and each agent resumes the exact conversation
+  it had (`pi --session`; `pi -c` if unknown).
   Saved in `~/.local/state/nvim/cockpit/<name>.json`.
 - **Small screens:** under 120 columns the drawer is fullscreen; `Alt+z`
   toggles fullscreen anywhere.
