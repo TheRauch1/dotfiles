@@ -26,6 +26,7 @@ link "$DOT/ghostty/config" "$HOME/.config/ghostty/config"
 link "$DOT/nvim" "$HOME/.config/nvim"
 link "$DOT/cockpit" "$HOME/.config/cockpit"
 link "$DOT/pi/extensions/cockpit.ts" "$HOME/.pi/agent/extensions/cockpit.ts"
+link "$DOT/pi/extensions/command-gate.ts" "$HOME/.pi/agent/extensions/command-gate.ts"
 link "$DOT/shell/rc.sh" "$HOME/.config/dotfiles/rc.sh"
 for cmd in "$DOT"/bin/*; do
   link "$cmd" "$HOME/.local/bin/$(basename "$cmd")"

@@ -29,6 +29,7 @@ servers, ...). Re-run it any time, e.g. after `git pull`.
 | `ghostty/config`   | `~/.config/ghostty/config`   | Option key works as Alt; terminfo copied on ssh |
 | `cockpit/`         | `~/.config/cockpit`          | `dev` and `ide` sessions, agent hooks ([below](#cockpit-one-ssh-session-all-projects-and-agents)) |
 | `pi/extensions/cockpit.ts` | `~/.pi/agent/extensions/` | Tells Neovim what pi is doing |
+| `pi/extensions/command-gate.ts` | `~/.pi/agent/extensions/` | Bash rules for pi: read-only oc/kubectl run, other oc/kubectl and git push/reset/rebase/... ask first (test: `node tests/pi/test_command_gate.ts`) |
 
 ## Daily use
 
@@ -166,6 +167,7 @@ is optional:
 | `shell.sh`                    | bash, zsh | `shell/rc.sh` sources every `dotfiles.d/*/shell.sh` at its end. |
 | `mise.toml`                   | mise      | The overlay's `setup.sh` links it to `~/.config/mise/conf.d/<name>.toml` (native mise feature). |
 | `CHEATSHEET.md`               | Neovim    | Appended to `SPC ?` (cheat sheet). |
+| `pi/command-gate.json`        | pi        | `{"rules": [{"match": "kubectl*", "approval": "deny"}]}`: `*`-glob rules (`allow`, `prompt`, `deny`) checked before the pi command gate's own; first match wins. A file that does not parse blocks every bash command until fixed and `/reload`ed. |
 | `setup.sh`                    | you       | Run by hand: links the overlay into `dotfiles.d`, installs, logs in. Safe to re-run. |
 
 Overlays only add, never edit files here. Removing the
