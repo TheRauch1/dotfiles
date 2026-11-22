@@ -135,8 +135,10 @@ async function main() {
   else if (outcome.status === "idle") {
     // Nothing was left to do: show the last answer.
     await unwatch();
-    const last = await follow(agent, (l) => console.log(l), undefined, 1);
+    let shown = false;
+    const last = await follow(agent, (l) => ((shown = true), console.log(l)), undefined, 1);
     await last();
+    console.log(`durable: nothing to continue${shown ? "" : " (no task yet)"}; start one with: durable "what to do"`);
   }
   await unwatch();
   await agent.close();
