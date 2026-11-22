@@ -1,0 +1,2 @@
+# Per-checkout agent choice for ide (echo claude > .cockpit-agent)
+.cockpit-agent
