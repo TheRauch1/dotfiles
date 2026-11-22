@@ -126,6 +126,7 @@ ide            # open (or reattach); after a reboot it reopens every project
 | `Ctrl+b t` | a normal shell in a popup |
 | `Ctrl+b w` | jump to the next agent waiting for you |
 | `Ctrl+b X` | close a project (not reopened next time) |
+| `Ctrl+b R` | reload a project: editor and agent restart where they were (Neovim must have no unsaved changes) |
 | `Ctrl+b ?` | all keys ([cockpit/ide/KEYS](cockpit/ide/KEYS)) |
 
 In its Neovim, `SPC a s/e/h/i` paste into the agent pane next to it.
@@ -154,8 +155,8 @@ It opens as one tab, `acme`, working in `~/ws/acme/` (a folder of links:
 is told they're separate repos (a generated `AGENTS.md`/`CLAUDE.md`). The
 file tree shows each repo, the git panel follows the repo of the file
 you're in, and `Ctrl+b g` opens lazygit on that repo (from the agent pane
-it asks which one). Edit the `.cockpit` file and reopen the tab to change
-the list.
+it asks which one). Edit the `.cockpit` file and press `Ctrl+b R` to
+reload the tab with the new list.
 
 ## durable: tasks that survive crashes and reboots
 
