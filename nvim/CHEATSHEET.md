@@ -24,7 +24,7 @@ Doom Emacs-style keys: `SPC` opens a menu of everything.
 | `SPC f r`   | recent files                             |
 | `SPC ,`     | switch buffer                            |
 | `SPC p p`   | open project (`~/dev`) in its own tab    |
-| `SPC /`     | search text in project                   |
+| `SPC /`     | search; words hit line or path           |
 | `SPC *`     | search word under cursor in project      |
 | `SPC s s`   | search in this file                      |
 | `SPC s r`   | resume the last search                   |

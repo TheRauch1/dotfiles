@@ -73,7 +73,8 @@ end
 
 function M.grep()
   local s = M.search_scope()
-  Snacks.picker.grep({ cwd = s.cwd, follow = s.follow, title = "Search " .. s.name })
+  -- Words match the line or the file path: `oauth.py get user` (config.smartgrep).
+  require("config.smartgrep").open({ cwd = s.cwd, follow = s.follow, title = "Search " .. s.name })
 end
 
 local function read_lines(path)

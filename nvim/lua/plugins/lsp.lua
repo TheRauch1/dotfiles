@@ -74,7 +74,7 @@ return {
           map("<leader>ca", vim.lsp.buf.code_action, "Code actions", { "n", "x" })
           map("<leader>cr", vim.lsp.buf.rename, "Rename symbol")
           map("<leader>cs", pick("lsp_symbols"), "Symbols in file")
-          map("<leader>cS", pick("lsp_workspace_symbols"), "Symbols in project")
+          map("<leader>cS", function() require("config.symbols").open() end, "Symbols in project")
           map("<leader>cl", "<cmd>checkhealth vim.lsp<cr>", "LSP info")
         end,
       })
