@@ -54,7 +54,10 @@ done
 if ! command -v mise >/dev/null && [[ ! -x $HOME/.local/bin/mise ]]; then
   curl -fsSL https://mise.run | sh
 fi
-"$(command -v mise || echo "$HOME/.local/bin/mise")" install
+MISE="$(command -v mise || echo "$HOME/.local/bin/mise")"
+"$MISE" install
+# pi-durable for `durable` (pi/durable/package.json, node from mise).
+"$MISE" exec -- npm --prefix "$DOT/pi/durable" ci --no-fund --no-audit --silent && echo "ok      pi/durable (npm ci)"
 # `dev` and `ide` need tmux to survive dropped SSH connections.
 if ! command -v tmux >/dev/null; then
   echo

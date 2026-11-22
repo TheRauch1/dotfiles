@@ -30,6 +30,7 @@ servers, ...). Re-run it any time, e.g. after `git pull`.
 | `cockpit/`         | `~/.config/cockpit`          | `dev` and `ide` sessions, agent hooks ([below](#cockpit-one-ssh-session-all-projects-and-agents)) |
 | `pi/extensions/cockpit.ts` | `~/.pi/agent/extensions/` | Tells Neovim what pi is doing |
 | `pi/extensions/command-gate.ts` | `~/.pi/agent/extensions/` | Bash rules for pi: read-only oc/kubectl run, other oc/kubectl and git push/reset/rebase/... ask first (test: `node tests/pi/test_command_gate.ts`) |
+| `pi/durable/`      | (`bin/durable`)    | `durable`: a pi agent on [pi-durable](https://github.com/earendil-works/pi/tree/main/packages/durable) that survives crashes ([below](#durable-tasks-that-survive-crashes-and-reboots)) |
 
 ## Daily use
 
@@ -38,6 +39,7 @@ servers, ...). Re-run it any time, e.g. after `git pull`.
 | `dev`     | All projects + their agents in one Neovim that survives SSH drops and restarts (see Cockpit) |
 | `ide`     | The same with tmux in charge: a tab per project, agent pane on the right (see Cockpit) |
 | `pd`      | In a git repo: live-updating diff (same as `SPC g d` in Neovim) |
+| `durable "task"` | A pi agent that finishes the task even if the process dies (see below) |
 
 In Neovim press `SPC` for a menu of everything and `SPC ?` for the
 [cheat sheet](nvim/CHEATSHEET.md).
@@ -154,6 +156,37 @@ file tree shows each repo, the git panel follows the repo of the file
 you're in, and `Ctrl+b g` opens lazygit on that repo (from the agent pane
 it asks which one). Edit the `.cockpit` file and reopen the tab to change
 the list.
+
+## durable: tasks that survive crashes and reboots
+
+`durable` is a small coding agent built on Earendil's
+[pi-durable](https://github.com/earendil-works/pi/tree/main/packages/durable)
+library (experimental, released with pi 1.0). pi-durable writes every model
+turn and tool call to storage before it shows it, so a process that dies
+mid-task loses nothing: the next process opens the same storage and carries
+on. A model request that was cut off is sent again; a `bash` or `edit` that
+was cut off is not rerun blindly: the model is told it was interrupted and
+decides what to do.
+
+```
+durable "migrate the tests to pytest"     # works here, prints each step
+durable -b "upgrade all deps, fix what breaks"   # same, in the background
+durable -f                                 # watch the background run
+durable                                    # after Ctrl+C, a crash, kill -9
+                                           # or a reboot: continue the task
+durable -l                                 # the conversation so far
+```
+
+One conversation per repo (git root), so a follow-up prompt has the earlier
+context; `--new` starts over. It uses pi's models (`~/.pi/agent/models.json`,
+e.g. from `cockpit/pi-endpoint.sh`) and pi's default model, `-m
+provider/model` picks another. State lives in `~/.local/state/pi-durable/`
+(SQLite). Run from an `ide` agent pane, the tab shows its ◐ / ● like pi's;
+with `echo durable > .cockpit-agent` in a project, `ide` itself continues
+an interrupted task when it reopens the project after a reboot.
+Its tools are pi's four (read, write, edit, bash) and it reads `AGENTS.md`
+/ `CLAUDE.md`; for interactive work, pi itself is still the better tool.
+Tests: `npm test` in `pi/durable`.
 
 ## Overlays
 
