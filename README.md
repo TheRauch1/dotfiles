@@ -125,6 +125,7 @@ ide            # open (or reattach); after a reboot it reopens every project
 | `Ctrl+b w` | jump to the next agent waiting for you |
 | `Ctrl+b X` | close a project (not reopened next time) |
 | `Ctrl+b R` | reload a project: editor and agent restart where they were (Neovim must have no unsaved changes) |
+| `Ctrl+b Q` | restart all of `ide` (tmux, every editor and agent), e.g. after `git pull` + `setup.sh`: every project comes back and you land on the same tab |
 | `Ctrl+b ?` | all keys ([cockpit/ide/KEYS](cockpit/ide/KEYS)) |
 
 In its Neovim, `SPC a s/e/h/i` paste into the agent pane next to it.

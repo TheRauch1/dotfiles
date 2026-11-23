@@ -21,6 +21,8 @@
 
   Session
     prefix d            detach (everything keeps running)
+    prefix Q            restart tmux, editors and agents (after a git pull
+                        or an update); every project comes back
     ide                 reattach / after a reboot: reopen all projects
                         and continue each agent's last conversation
 
