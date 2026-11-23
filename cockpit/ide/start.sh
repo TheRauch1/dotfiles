@@ -16,6 +16,11 @@ if [[ -f $list ]]; then
     [[ -n $first ]] || first=$(t list-windows -t "$session" -F '#{window_index}	#{@src}' | awk -F'\t' -v s="$dir" '$2 == s { print $1; exit }')
   done < "$list"
 fi
+# After a restart (prefix Q), back to the tab you were on.
+if [[ -n ${IDE_SELECT:-} ]]; then
+  w=$(t list-windows -t "$session" -F '#{window_index}	#{@src}' | awk -F'\t' -v s="$IDE_SELECT" '$2 == s { print $1; exit }')
+  [[ -n $w ]] && first=$w
+fi
 if [[ -n $first ]]; then
   t select-window -t "$session:$first"
 else
